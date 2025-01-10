@@ -276,6 +276,33 @@ void buffer::insert_metadata_( const nuts_buffer_mem_addr_t& mem_addr, const nut
   metadata_ = std::make_tuple( mem_addr, filename, ident );
 }
 
+bool buffer::get_read_(){
+
+  if ( DEBUG ) {
+    { // MARK: (buffer) MUTEX_LOCK
+      std::shared_lock lock( mtx_ );
+      BUFFER << "buffer::get_read_() called ⇣" << '\n'
+             << "  read_ -> [ " << std::boolalpha << read_ << " ]" << '\n';
+    }
+  }
+
+  return read_.load();
+}
+
+void buffer::set_read_() {
+
+  const bool previous_read = read_.exchange( true );
+  if ( DEBUG ) {
+    {// MARK (buffer) MUTEX LOCK
+      std::shared_lock lock( mtx_ );
+      BUFFER << "buffer::set_read_() called ⇣" << '\n'
+       << "  read_ ("
+       << " was -> [ " << std::boolalpha << previous_read << " ]" // previous
+       << " => now[ " << std::boolalpha << read_ << " ] )" << '\n'; // actual
+    }
+  }
+}
+
 bool buffer::get_has_registry_() {
 
   if ( DEBUG ) {
