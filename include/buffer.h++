@@ -333,9 +333,27 @@ public:
   // HINT: not implemented yet
   void registry( std::string& ident );
 
-  // MARK: (buffer) buffer from file methods
+  /**
+   * Reads the contents of a file specified by the given file path and processes its data into the buffer.
+   *
+   * @param file_path The path to the file to be read. It must point to a valid, accessible file on the filesystem.
+   *
+   * @throws std::invalid_argument If the file does not exist at the specified path.
+   * @throws std::runtime_error If the file cannot be opened for reading.
+   */
   void read( const std::filesystem::path& file_path );
-  void read( const int& fd, const off_t& file_size );
+  /**
+   * Reads the content of a file specified by the given file path and file descriptor, processes
+   * it in chunks, and populates the buffer with the read data. Metadata about the read operation
+   * is also recorded.
+   *
+   * @param file_path The file path of the file to be read. Used for metadata recording.
+   * @param fd The file descriptor associated with the file being read.
+   * @param file_size The total size of the file in bytes.
+   *
+   * @throws std::runtime_error If the `::read` [<fcntl.h>] function return `bytes_read<0`
+   */
+  void read( const std::filesystem::path& file_path, const int& fd, const off_t& file_size );
 
   // HINT: not implemented yet
   void read_into( std::string ident, const std::filesystem::path& file_path );
@@ -377,8 +395,23 @@ private:
   void insert_metadata_( const nuts_buffer_mem_addr_t& mem_addr, const nuts_buffer_from_file_t& filename, const nuts_buffer_registry_identifier_t& ident );
   nuts_buffer_metadata_t metadata_{};
 
-  // MARK: (buffer) read file methods and fields
+  /**
+   * Retrieves the current state of the read flag.
+   *
+   * This method acquires a shared lock for thread-safe access to the
+   * internal read flag and provides its current value. If debugging is
+   * enabled, it also logs the operation and the state of the read flag.
+   *
+   * @return The current state of the read flag (true if active, false otherwise).
+   */
   bool get_read_();
+  /**
+   * Marks the buffer as read by updating the internal state.
+   * This method updates the read status of the buffer to indicate
+   * that it has been accessed for reading. Thread-safe operation
+   * using atomic exchange to ensure consistency in multithreaded
+   * environments. When in debug mode, log the state change.
+   */
   void set_read_();
   std::atomic<bool> read_{ false };
 
