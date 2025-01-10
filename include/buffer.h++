@@ -48,6 +48,7 @@ using nuts_buffer_metadata_t = std::tuple<nuts_buffer_mem_addr_t, nuts_buffer_fr
 // HINT: a container of buffers (not implemented yet)
 struct nuts_buffer_stored_t {
   nuts_buffer_t buffer;
+  bool is_allocated;
   std::optional<nuts_buffer_metadata_t> metadata;
 };
 using nuts_buffer_registry_t = std::unordered_map<std::string, nuts_buffer_stored_t>;
@@ -311,10 +312,11 @@ public:
       // Insert metadata into the registry
       BUFFER << "  nuts_buffer_ address " << addr_hex_() << " (nuts_buffer_) -> " << ident << '\n';
       insert_metadata_( addr_hex_(), std::nullopt, ident );
-
+      set_allocated_();
       registry_->insert( std::make_pair( ident,
-        nuts_buffer_stored_t{ std::move(nuts_buffer_), std::move(metadata_) } )
+        nuts_buffer_stored_t{ std::move(nuts_buffer_), get_allocated_(), std::move(metadata_) } )
       );
+      unset_allocated_();
 
       // reset metadata_
       metadata_ = {};
