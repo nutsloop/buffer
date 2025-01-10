@@ -110,7 +110,9 @@ public:
   explicit buffer( bool has_registry );
 
   // these are when reading from a file and optionally inserting into registry
+  // HINT: not implemented yet
   buffer( const std::filesystem::path& file_path, std::optional<std::string&> ident );
+  // HINT: not implemented yet
   buffer( const int& fd, const off_t& file_size, std::optional<std::string&> ident );
 
   /**
@@ -325,13 +327,23 @@ public:
   }
 
   // MARK: (buffer) buffer registry methods
+  // HINT: not implemented yet
   void registry();
+  // HINT: not implemented yet
   void registry( std::string& ident );
 
   // MARK: (buffer) buffer from file methods
   void read( const std::filesystem::path& file_path );
   void read( const int& fd, const off_t& file_size );
+
+  // HINT: not implemented yet
+  void read_into( std::string ident, const std::filesystem::path& file_path );
+  // HINT: not implemented yet
+  void read_into( std::string ident, const std::filesystem::path& file_path, const int& fd, const off_t& file_size );
+
+  // HINT: not implemented yet
   void write( const std::filesystem::path& file_path );
+  // HINT: not implemented yet
   void write( const int& fd );
 
 private:
