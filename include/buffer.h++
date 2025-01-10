@@ -380,6 +380,33 @@ private:
   nuts_buffer_unlined_t nuts_buffer_unlined_;
   nuts_byte_t nuts_byte_{ 0x00 };
 
+  /**
+   * Retrieves the current allocation status of the buffer.
+   * The method checks and returns whether the buffer is currently allocated.
+   * It uses a shared lock to ensure thread-safe access to the allocation status.
+   *
+   * @return A boolean value indicating whether the buffer is allocated.
+   */
+  bool get_allocated_();
+  /**
+   * Marks the buffer as allocated by updating its internal state.
+   * Ensures thread-safe operation using a mutex and provides debug output
+   * if debugging is enabled.
+   *
+   * This method transitions the `allocated_` flag to `true` while preserving the
+   * previous state for potential debug logging purposes.
+   */
+  void set_allocated_();
+  /**
+   * Marks the buffer as not allocated by updating the allocated_ flag to false.
+   * If debugging is enabled, logs the previous and updated states of the allocated_ flag.
+   *
+   * This method also ensures thread safety by using a shared lock for accessing
+   * and logging the state of the allocated_ flag.
+   */
+  void unset_allocated_();
+  std::atomic<bool> allocated_{ false };
+
   // MARK: (buffer) metadata methods and fields
   /**
    * Inserts metadata into the buffer. This metadata includes memory address,
