@@ -230,6 +230,7 @@ public:
 
       nuts_buffer_unlined_ = nuts_buffer_unlined_t( bytes_per_line, nuts_byte_ );
       nuts_buffer_ = nuts_buffer_t( allocation, nuts_buffer_unlined_ );
+      insert_metadata_( addr_hex_(), std::nullopt, std::nullopt );
     }
   }
 
