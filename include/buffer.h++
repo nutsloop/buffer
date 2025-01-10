@@ -41,7 +41,7 @@ using nuts_buffer_t = std::vector<nuts_buffer_unlined_t>;
 // HINT: std::get<1> -> std::optional<std::string> => created from file (filename)
 // HINT: std::get<2> -> std::optional<std::string> => part of library (identifier)
 using nuts_buffer_mem_addr_t = std::string;
-using nuts_buffer_from_file_t = std::optional<std::string>;
+using nuts_buffer_from_file_t = std::optional<std::filesystem::path>;
 using nuts_buffer_registry_identifier_t = std::optional<std::string>;
 using nuts_buffer_metadata_t = std::tuple<nuts_buffer_mem_addr_t, nuts_buffer_from_file_t, nuts_buffer_registry_identifier_t>;
 
@@ -232,6 +232,7 @@ public:
       nuts_buffer_unlined_ = nuts_buffer_unlined_t( bytes_per_line, nuts_byte_ );
       nuts_buffer_ = nuts_buffer_t( allocation, nuts_buffer_unlined_ );
       insert_metadata_( addr_hex_(), std::nullopt, std::nullopt );
+      set_allocated_();
     }
   }
 
