@@ -1,5 +1,9 @@
+#include <iostream>
+#include <thread>
+
 #include "buffer.h++"
 
+#include <unistd.h>
 #include <sys/fcntl.h>
 #include <sys/stat.h>
 
@@ -35,6 +39,33 @@ int main() {
   const auto file_size = file_stats.st_size;
 
   buf_fromfd.read( std::filesystem::path{path}, fd_, file_size );
+  BUFFER << std::format("buf_fromfd before removing line 4: size -> {}", buf_fromfd.size()) << '\n';
+  buf_fromfd >> buf_fromfd.delete_at( 3 );
+  BUFFER << std::format("buf_fromfd after removing line 4: size -> {}", buf_fromfd.size()) << '\n';
+  BUFFER << std::format("buf_fromfd line 4 size -> {}", buf_fromfd.size(3)) << '\n';
+  BUFFER << buf_fromfd.to_string( 3 ) << '\n';
+  buf_fromfd >> buf_fromfd.delete_at( 3, 2 );
+  BUFFER << std::format("buf_fromfd line 4 size -> {}", buf_fromfd.size(3)) << '\n';
 
+  BUFFER << buf_fromfd.to_string( 3 ) << '\n';
+  buf_fromfd << std::make_tuple( 3, buf_fromfd.size( 3 ), buf_fromfd.byte('!') );
+  buf_fromfd << std::make_tuple( 3, buf_fromfd.size( 3 ), buf_fromfd.byte('!') );
+  BUFFER << std::format("buf_fromfd line 4 size -> {}", buf_fromfd.size(3)) << '\n';
+  BUFFER << buf_fromfd.to_string( 3 ) << '\n';
+
+  // Simulate uploading byte by byte
+  while (auto byte_opt = buf_fromfd.stream()) {
+    nutsloop::nuts_byte_t b = *byte_opt;
+    std::cout << static_cast<char>(b) << std::flush;
+    //std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+  }
+
+  while (auto byte_opt = buf_fromfd.stream(1057)) {
+    nutsloop::nuts_byte_t b = *byte_opt;
+    std::cout << static_cast<char>(b) << std::flush;
+    std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
+  }
+
+  ::close(fd_);
   return 0;
 }
