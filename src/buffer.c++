@@ -217,6 +217,8 @@ void buffer::read( const std::filesystem::path& file_path, const int& fd, const 
   }
 }
 
+// MARK: (buffer) private methods implementation.
+
 std::string buffer::addr_hex_() {
   return std::format( "0x{:x}", reinterpret_cast<uintptr_t>( nuts_buffer_.data() ) ); }
 
