@@ -88,10 +88,9 @@ concept ValidIntegerTypes = std::same_as<T, u8> ||
   std::same_as<T, u64> ||
   std::same_as<T, size_t>;
 
-class buffer{
+class buffer {
 
 public:
-
   /**
    * Default constructor for the buffer class.
    * Initializes an empty buffer instance without allocating any resources.
@@ -126,12 +125,13 @@ public:
    * @param bytes_per_line An optional parameter specifying the number of bytes per line. Defaults to 1.
    * @requires The types A and B must meet the requirements of the `ValidIntegerTypes_C` concept.
    *
-   * @throws std::invalid_argument If the buffer has an existing registry, if allocation exceeds the maximum value of type
-   * A, or if bytes per line exceed the maximum value of type B.
+   * @throws std::invalid_argument If the buffer has an existing registry, if allocation exceeds the maximum value of
+   * type A, or if bytes per line exceed the maximum value of type B.
    */
   template <typename A = u8, typename B = u8>
   explicit buffer( A allocation = 1, B bytes_per_line = 1 )
-    requires ValidIntegerTypes<A> && ValidIntegerTypes<B> {
+    requires ValidIntegerTypes<A> && ValidIntegerTypes<B>
+  {
 
     // Ensure both types are unsigned
     static_assert( std::is_unsigned_v<A>, "A must be an unsigned type" );
@@ -140,24 +140,22 @@ public:
     // Check allocation size validity
     constexpr A a_max_value = std::numeric_limits<A>::max();
     if ( allocation > a_max_value ) {
-      throw std::invalid_argument(
-        "Allocation size exceeds the maximum value of A" );
+      throw std::invalid_argument( "Allocation size exceeds the maximum value of A" );
     }
 
     // Check bytes per line validity
     constexpr B b_max_value = std::numeric_limits<B>::max();
     if ( bytes_per_line > b_max_value ) {
-      throw std::invalid_argument(
-        "Bytes per line size exceeds the maximum value of B" );
+      throw std::invalid_argument( "Bytes per line size exceeds the maximum value of B" );
     }
 
     if ( DEBUG ) {
       { // MARK (buffer) MUTEX LOCK
         std::shared_lock lock( mtx_ );
         this->debug_is_activated_();
-        BUFFER << std::format(
-            "buffer::buffer(allocation[{}], bytes_per_line[{}]) called ⇣"
-            , allocation, bytes_per_line) << '\n';
+        BUFFER << std::format( "buffer::buffer(allocation[{}], bytes_per_line[{}]) called ⇣", allocation,
+                               bytes_per_line )
+               << '\n';
       }
     }
 
@@ -177,17 +175,17 @@ public:
    * @param allocation The number of allocation units to reserve for the buffer. Must be of an unsigned type.
    * @param bytes_per_line The number of bytes attributed to each line of the buffer. Must be of an unsigned type.
    *
-   * @throws std::invalid_argument If the buffer has a registry, or if the allocation size or bytes per line exceed their
-   * respective maximum values.
+   * @throws std::invalid_argument If the buffer has a registry, or if the allocation size or bytes per line exceed
+   * their respective maximum values.
    * @throws std::logic_error If the buffer is already allocated.
    */
   template <typename A = u8, typename B = u8>
   void allocate( A allocation = 1, B bytes_per_line = 1 )
-    requires ValidIntegerTypes<A> && ValidIntegerTypes<B> {
+    requires ValidIntegerTypes<A> && ValidIntegerTypes<B>
+  {
 
     if ( get_has_registry_() ) {
-      throw std::invalid_argument(
-        "this buffer has a registry. use buffer::allocate_into() instead" );
+      throw std::invalid_argument( "this buffer has a registry. use buffer::allocate_into() instead" );
     }
 
     // Ensure both types are unsigned
@@ -197,24 +195,22 @@ public:
     // Check allocation size validity
     constexpr A a_max_value = std::numeric_limits<A>::max();
     if ( allocation > a_max_value ) {
-      throw std::invalid_argument(
-        "Allocation size exceeds the maximum value of A" );
+      throw std::invalid_argument( "Allocation size exceeds the maximum value of A" );
     }
 
     // Check bytes per line validity
     constexpr B b_max_value = std::numeric_limits<B>::max();
     if ( bytes_per_line > b_max_value ) {
-      throw std::invalid_argument(
-        "Bytes per line size exceeds the maximum value of B" );
+      throw std::invalid_argument( "Bytes per line size exceeds the maximum value of B" );
     }
 
     if ( DEBUG ) {
       { // MARK (buffer) MUTEX LOCK
         std::shared_lock lock( mtx_ );
         this->debug_is_activated_();
-        BUFFER << std::format(
-            "buffer::allocate(allocation[{}], bytes_per_line[{}]) called ⇣"
-            , allocation, bytes_per_line ) << '\n';
+        BUFFER << std::format( "buffer::allocate(allocation[{}], bytes_per_line[{}]) called ⇣", allocation,
+                               bytes_per_line )
+               << '\n';
       }
     }
 
@@ -224,7 +220,7 @@ public:
       // Check if the buffer is already allocated
       if ( !nuts_buffer_.empty() ) {
         if ( DEBUG ) {
-            BUFFER << "  but the buffer is already allocated. it will throw a logic::error" << '\n';
+          BUFFER << "  but the buffer is already allocated. it will throw a logic::error" << '\n';
         }
         throw std::logic_error( "Buffer is already allocated." );
       }
@@ -252,16 +248,15 @@ public:
    */
   template <typename A = u8, typename B = u8>
   void allocate_into( std::string ident, A allocation = 1, B bytes_per_line = 1 )
-    requires ValidIntegerTypes<A> && ValidIntegerTypes<B> {
+    requires ValidIntegerTypes<A> && ValidIntegerTypes<B>
+  {
 
     if ( !get_has_registry_() ) {
-      throw std::invalid_argument(
-        "registry_ is false. use buffer::buffer( true ) to initialize the registry" );
+      throw std::invalid_argument( "registry_ is false. use buffer::buffer( true ) to initialize the registry" );
     }
 
     if ( registry_ == nullptr ) {
-      throw std::invalid_argument(
-        "registry_ is nullptr. use buffer::buffer( true ) to initialize the registry" );
+      throw std::invalid_argument( "registry_ is nullptr. use buffer::buffer( true ) to initialize the registry" );
     }
 
     // Ensure both types are unsigned
@@ -271,24 +266,22 @@ public:
     // Check allocation size validity
     constexpr A a_max_value = std::numeric_limits<A>::max();
     if ( allocation > a_max_value ) {
-      throw std::invalid_argument(
-        "Allocation size exceeds the maximum value of A" );
+      throw std::invalid_argument( "Allocation size exceeds the maximum value of A" );
     }
 
     // Check bytes per line validity
     constexpr B b_max_value = std::numeric_limits<B>::max();
     if ( bytes_per_line > b_max_value ) {
-      throw std::invalid_argument(
-        "Bytes per line size exceeds the maximum value of B" );
+      throw std::invalid_argument( "Bytes per line size exceeds the maximum value of B" );
     }
 
     if ( DEBUG ) {
       { // MARK (buffer) MUTEX LOCK
         std::shared_lock lock( mtx_ );
         this->debug_is_activated_();
-        BUFFER << std::format(
-            "buffer::allocate(allocation[{}], bytes_per_line[{}], ident[{}]) called ⇣"
-            , allocation, bytes_per_line, ident ) << '\n';
+        BUFFER << std::format( "buffer::allocate(allocation[{}], bytes_per_line[{}], ident[{}]) called ⇣", allocation,
+                               bytes_per_line, ident )
+               << '\n';
       }
     }
 
@@ -304,7 +297,7 @@ public:
       }
 
       nuts_buffer_unlined_ = nuts_buffer_unlined_t( bytes_per_line, nuts_byte_ );
-      nuts_buffer_ = nuts_buffer_t( allocation, std::move( nuts_buffer_unlined_) );
+      nuts_buffer_ = nuts_buffer_t( allocation, std::move( nuts_buffer_unlined_ ) );
 
       // clear nuts_unlined_buffer_ and release unused memory.
       nuts_buffer_unlined_.clear();
@@ -314,9 +307,8 @@ public:
       BUFFER << "  nuts_buffer_ address " << addr_hex_() << " (nuts_buffer_) -> " << ident << '\n';
       insert_metadata_( addr_hex_(), std::nullopt, ident );
       set_allocated_();
-      registry_->insert( std::make_pair( ident,
-        nuts_buffer_stored_t{ std::move(nuts_buffer_), get_allocated_(), std::move(metadata_) } )
-      );
+      registry_->insert( std::make_pair(
+        ident, nuts_buffer_stored_t{ std::move( nuts_buffer_ ), get_allocated_(), std::move( metadata_ ) } ) );
       unset_allocated_();
 
       // reset metadata_
@@ -326,7 +318,7 @@ public:
       nuts_buffer_.clear();
       nuts_buffer_.shrink_to_fit();
 
-      BUFFER << "  registry_ metadata address -> " << std::get<0>(registry_->at( ident ).metadata.value()) << '\n';
+      BUFFER << "  registry_ metadata address -> " << std::get<0>( registry_->at( ident ).metadata.value() ) << '\n';
     }
   }
 
@@ -422,7 +414,8 @@ private:
    * @param ident An optional registry identifier of type nuts_buffer_registry_identifier_t,
    *        used for tracking or identifying associated metadata. Pass std::nullopt if not applicable.
    */
-  void insert_metadata_( const nuts_buffer_mem_addr_t& mem_addr, const nuts_buffer_from_file_t& filename, const nuts_buffer_registry_identifier_t& ident );
+  void insert_metadata_( const nuts_buffer_mem_addr_t& mem_addr, const nuts_buffer_from_file_t& filename,
+                         const nuts_buffer_registry_identifier_t& ident );
   nuts_buffer_metadata_t metadata_{};
 
   /**
@@ -465,7 +458,7 @@ private:
    */
   void set_has_registry_();
   std::atomic<bool> has_registry_{ false };
-  std::unique_ptr<nuts_buffer_registry_t> registry_ { nullptr };
+  std::unique_ptr<nuts_buffer_registry_t> registry_{ nullptr };
 
   // MARK: (buffer) buffer debug methods and fields
   /**
