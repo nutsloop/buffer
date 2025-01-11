@@ -13,9 +13,17 @@ set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 set(BUILD_DIR ${CMAKE_SOURCE_DIR}/build)
 set(INSTALL_DIR /usr/local/bin)
 
-# Define where the built library is
-set(LOG_LIB_DIR ${CMAKE_SOURCE_DIR}/deps/log/build/release)
-set(LOG_ROOT_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/deps/log/)
+# Define an option to switch between configurations
+option(USE_RELATIVE_PATHS "Use relative paths for libraries and includes" OFF)
+
+# Configure based on the switch
+if(USE_RELATIVE_PATHS)
+    set(LOG_LIB_DIR "../deps/log/build/release")
+    set(LOG_ROOT_INCLUDE_DIR "../deps/log/")
+else()
+    set(LOG_LIB_DIR "${CMAKE_SOURCE_DIR}/deps/log/build/release")
+    set(LOG_ROOT_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/deps/log/")
+endif()
 
 # Collect include directories recursively
 file(GLOB_RECURSE HEADER_DIRS LIST_DIRECTORIES true "${INCLUDE_DIR}/*")
