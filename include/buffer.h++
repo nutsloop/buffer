@@ -12,9 +12,9 @@
 #include <unordered_map>
 #include <vector>
 
-#define BUFFER log::stream( "buffer", __FILE__, __LINE__, 'I' )
-#define BUFFER_WARN log::stream( "buffer", __FILE__, __LINE__, 'W' )
-#define BUFFER_ERROR log::stream( "buffer", __FILE__, __LINE__, 'E' )
+#define BUFFER log::stream( "buffer", __FILE__, __LINE__, nutsloop::Level::INFO )
+#define BUFFER_WARN log::stream( "buffer", __FILE__, __LINE__, nutsloop::Level::WARN )
+#define BUFFER_ERROR log::stream( "buffer", __FILE__, __LINE__, nutsloop::Level::ERROR )
 
 namespace nutsloop{
 
