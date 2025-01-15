@@ -12,6 +12,9 @@ int main() {
   constexpr nutsloop::u8 lines = 3;
   constexpr nutsloop::u16 bytes_per_line = 20;
 
+  nutsloop::buffer buffer_empty;
+  buffer_empty.allocate( nutsloop::u8{24}, nutsloop::u16{100} );
+
   // creating a buffer with a registry
   nutsloop::buffer buffer( true );
   buffer.allocate_into( "main_buffer" );
