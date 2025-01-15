@@ -16,7 +16,7 @@
 #define BUFFER_WARN log::stream( "buffer", __FILE__, __LINE__, nutsloop::Level::WARN )
 #define BUFFER_ERROR log::stream( "buffer", __FILE__, __LINE__, nutsloop::Level::ERROR )
 
-namespace nutsloop{
+namespace nutsloop {
 
 constexpr bool DEBUG = true;
 
@@ -58,9 +58,9 @@ using nuts_buffer_view_unlined_t = std::span<nuts_byte_t>;
 using nuts_buffer_view_t = std::span<nuts_buffer_view_unlined_t>;
 
 // HINT: read-only buffer (not implemented yet)
-template<std::size_t S>
+template <std::size_t S>
 using nuts_buffer_ro_unlined_t = std::array<nuts_byte_t, S>;
-template<std::size_t S, std::size_t I>
+template <std::size_t S, std::size_t I>
 using nuts_buffer_ro_t = std::array<nuts_buffer_ro_unlined_t<I>, S>;
 
 // MARK: (buffer) buffer concepts
@@ -326,11 +326,10 @@ private:
   std::atomic<bool> debug_activated_{ false };
 // ONGOING: experimentation.
 public:
-
   // Overload << for insertion
   buffer& operator<<( const std::tuple<size_t, size_t, nuts_byte_t>& insertion ) {
     const size_t line = std::get<0>( insertion ); // Line index
-    const auto col = static_cast<std::ptrdiff_t>(std::get<1>( insertion )); // Column index
+    const auto col = static_cast<std::ptrdiff_t>( std::get<1>( insertion ) ); // Column index
     const nuts_byte_t value = std::get<2>( insertion ); // Byte value to insert
 
     if ( line >= nuts_buffer_.size() )
@@ -345,25 +344,26 @@ public:
   }
 
   // Overload >> for deletion
-  buffer& operator>>(const std::tuple<size_t, std::optional<size_t>>& deletion) {
-    const auto line = static_cast<std::ptrdiff_t>(std::get<0>(deletion)); // Line index
+  buffer& operator>>( const std::tuple<size_t, std::optional<size_t>>& deletion ) {
+    const auto line = static_cast<std::ptrdiff_t>( std::get<0>( deletion ) ); // Line index
 
     BUFFER << "INTO OPERATOR >>" << '\n';
-    if (line >= nuts_buffer_.size())
-      throw std::out_of_range("Line index out of range");
+    if ( line >= nuts_buffer_.size() )
+      throw std::out_of_range( "Line index out of range" );
 
-    if (std::get<1>(deletion).has_value()) {
+    if ( std::get<1>( deletion ).has_value() ) {
       // Column index provided: delete a specific character
-      const auto col = static_cast<std::ptrdiff_t>(std::get<1>(deletion).value());
-      auto& target_line = nuts_buffer_[line];
+      const auto col = static_cast<std::ptrdiff_t>( std::get<1>( deletion ).value() );
+      auto& target_line = nuts_buffer_[ line ];
 
-      if (col >= target_line.size())
-        throw std::out_of_range("Column index out of range");
+      if ( col >= target_line.size() )
+        throw std::out_of_range( "Column index out of range" );
 
-      target_line.erase(target_line.begin() + col);
-    } else {
+      target_line.erase( target_line.begin() + col );
+    }
+    else {
       // No column index: delete the entire line
-      nuts_buffer_.erase(nuts_buffer_.begin() + line);
+      nuts_buffer_.erase( nuts_buffer_.begin() + line );
     }
 
     return *this;
@@ -373,34 +373,28 @@ public:
     return { line, col };
   }
 
-  std::size_t size() const {
-    return nuts_buffer_.size();
-  }
+  std::size_t size() const { return nuts_buffer_.size(); }
 
-  std::size_t size( const std::size_t line ) const {
-    return nuts_buffer_[line].size();
-  }
+  std::size_t size( const std::size_t line ) const { return nuts_buffer_[ line ].size(); }
 
-  nuts_byte_t byte(char c) {
-    return nuts_byte_ = static_cast<std::byte>(c);
-  }
+  nuts_byte_t byte( char c ) { return nuts_byte_ = static_cast<std::byte>( c ); }
 
   std::string to_string() const {
     std::string buffer_string;
-    for (const auto& line : nuts_buffer_) {
-      for (const auto& byte : line) {
-        buffer_string.push_back(static_cast<char>(byte));
+    for ( const auto& line : nuts_buffer_ ) {
+      for ( const auto& byte : line ) {
+        buffer_string.push_back( static_cast<char>( byte ) );
       }
-      buffer_string.push_back('\n');
+      buffer_string.push_back( '\n' );
     }
     return buffer_string;
   }
 
-  std::string to_string(const std::size_t line) const {
+  std::string to_string( const std::size_t line ) const {
 
     std::string buffer_string;
-    for (const auto& byte : nuts_buffer_[line]) {
-      buffer_string.push_back(static_cast<char>(byte));
+    for ( const auto& byte : nuts_buffer_[ line ] ) {
+      buffer_string.push_back( static_cast<char>( byte ) );
     }
     return buffer_string;
   }
@@ -409,37 +403,37 @@ public:
   std::optional<nuts_byte_t> stream() const {
     static size_t line_idx_ = 0;
     static size_t col_idx_ = 0;
-    if (line_idx_ >= size())
+    if ( line_idx_ >= size() )
       return std::nullopt; // End of stream
 
-    const auto& line = nuts_buffer_[line_idx_];
+    const auto& line = nuts_buffer_[ line_idx_ ];
     // If we've finished the current line, return '\n'
-    if (col_idx_ == line.size()) {
+    if ( col_idx_ == line.size() ) {
       ++line_idx_; // Move to the next line
       col_idx_ = 0; // Reset column index
-      return nuts_byte_t{'\n'}; // Return newline
+      return nuts_byte_t{ '\n' }; // Return newline
     }
 
-    return line[col_idx_++];
+    return line[ col_idx_++ ];
   }
 
-  std::optional<nuts_byte_t> stream( const size_t line) const {
+  std::optional<nuts_byte_t> stream( const size_t line ) const {
     // Check if the line index is valid
-    if (line >= nuts_buffer_.size())
+    if ( line >= nuts_buffer_.size() )
       return std::nullopt; // No such line
 
     static size_t col_idx_ = 0; // Column index, resettable per stream call
 
-    const auto& target_line = nuts_buffer_[line];
+    const auto& target_line = nuts_buffer_[ line ];
 
     // End of line
-    if (col_idx_ >= target_line.size()) {
+    if ( col_idx_ >= target_line.size() ) {
       col_idx_ = 0; // Reset column index for next usage
       return std::nullopt; // Signal end of the line
     }
 
     // Return the next byte in the line
-    return target_line[col_idx_++];
+    return target_line[ col_idx_++ ];
   }
 };
 
