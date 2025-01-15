@@ -1,7 +1,5 @@
 #include "buffer.h++"
 
-#include <sstream>
-
 namespace nutsloop {
 
 buffer::buffer() {
