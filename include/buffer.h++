@@ -130,42 +130,7 @@ public:
    */
   template <typename A = u8, typename B = u8>
   explicit buffer( A allocation = 1, B bytes_per_line = 1 )
-    requires ValidIntegerTypes<A> && ValidIntegerTypes<B>
-  {
-
-    // Ensure both types are unsigned
-    static_assert( std::is_unsigned_v<A>, "A must be an unsigned type" );
-    static_assert( std::is_unsigned_v<B>, "B must be an unsigned type" );
-
-    // Check allocation size validity
-    constexpr A a_max_value = std::numeric_limits<A>::max();
-    if ( allocation > a_max_value ) {
-      throw std::invalid_argument( "Allocation size exceeds the maximum value of A" );
-    }
-
-    // Check bytes per line validity
-    constexpr B b_max_value = std::numeric_limits<B>::max();
-    if ( bytes_per_line > b_max_value ) {
-      throw std::invalid_argument( "Bytes per line size exceeds the maximum value of B" );
-    }
-
-    if ( DEBUG ) {
-      { // MARK (buffer) MUTEX LOCK
-        std::shared_lock lock( mtx_ );
-        this->debug_is_activated_();
-        BUFFER << std::format( "buffer::buffer(allocation[{}], bytes_per_line[{}]) called ⇣", allocation,
-                               bytes_per_line )
-               << '\n';
-      }
-    }
-
-    { // MARK (buffer) MUTEX LOCK
-      std::shared_lock lock( mtx_ );
-      nuts_buffer_unlined_ = nuts_buffer_unlined_t( bytes_per_line, nuts_byte_ );
-      nuts_buffer_ = nuts_buffer_t( allocation, nuts_buffer_unlined_ );
-      insert_metadata_( addr_hex_(), std::nullopt, std::nullopt );
-    }
-  }
+    requires ValidIntegerTypes<A> && ValidIntegerTypes<B>;
 
   /**
    * Allocates memory for the buffer based on the specified allocation size and bytes per line.
@@ -181,56 +146,7 @@ public:
    */
   template <typename A = u8, typename B = u8>
   void allocate( A allocation = 1, B bytes_per_line = 1 )
-    requires ValidIntegerTypes<A> && ValidIntegerTypes<B>
-  {
-
-    if ( get_has_registry_() ) {
-      throw std::invalid_argument( "this buffer has a registry. use buffer::allocate_into() instead" );
-    }
-
-    // Ensure both types are unsigned
-    static_assert( std::is_unsigned_v<A>, "A must be an unsigned type" );
-    static_assert( std::is_unsigned_v<B>, "B must be an unsigned type" );
-
-    // Check allocation size validity
-    constexpr A a_max_value = std::numeric_limits<A>::max();
-    if ( allocation > a_max_value ) {
-      throw std::invalid_argument( "Allocation size exceeds the maximum value of A" );
-    }
-
-    // Check bytes per line validity
-    constexpr B b_max_value = std::numeric_limits<B>::max();
-    if ( bytes_per_line > b_max_value ) {
-      throw std::invalid_argument( "Bytes per line size exceeds the maximum value of B" );
-    }
-
-    if ( DEBUG ) {
-      { // MARK (buffer) MUTEX LOCK
-        std::shared_lock lock( mtx_ );
-        this->debug_is_activated_();
-        BUFFER << std::format( "buffer::allocate(allocation[{}], bytes_per_line[{}]) called ⇣", allocation,
-                               bytes_per_line )
-               << '\n';
-      }
-    }
-
-    { // MARK (buffer) MUTEX LOCK
-      std::shared_lock lock( mtx_ );
-
-      // Check if the buffer is already allocated
-      if ( !nuts_buffer_.empty() ) {
-        if ( DEBUG ) {
-          BUFFER << "  but the buffer is already allocated. it will throw a logic::error" << '\n';
-        }
-        throw std::logic_error( "Buffer is already allocated." );
-      }
-
-      nuts_buffer_unlined_ = nuts_buffer_unlined_t( bytes_per_line, nuts_byte_ );
-      nuts_buffer_ = nuts_buffer_t( allocation, nuts_buffer_unlined_ );
-      insert_metadata_( addr_hex_(), std::nullopt, std::nullopt );
-      set_allocated_();
-    }
-  }
+    requires ValidIntegerTypes<A> && ValidIntegerTypes<B>;
 
   /**
    * Allocates memory for a buffer and manages its metadata registry. This method initializes
@@ -248,79 +164,7 @@ public:
    */
   template <typename A = u8, typename B = u8>
   void allocate_into( std::string ident, A allocation = 1, B bytes_per_line = 1 )
-    requires ValidIntegerTypes<A> && ValidIntegerTypes<B>
-  {
-
-    if ( !get_has_registry_() ) {
-      throw std::invalid_argument( "registry_ is false. use buffer::buffer( true ) to initialize the registry" );
-    }
-
-    if ( registry_ == nullptr ) {
-      throw std::invalid_argument( "registry_ is nullptr. use buffer::buffer( true ) to initialize the registry" );
-    }
-
-    // Ensure both types are unsigned
-    static_assert( std::is_unsigned_v<A>, "A must be an unsigned type" );
-    static_assert( std::is_unsigned_v<B>, "B must be an unsigned type" );
-
-    // Check allocation size validity
-    constexpr A a_max_value = std::numeric_limits<A>::max();
-    if ( allocation > a_max_value ) {
-      throw std::invalid_argument( "Allocation size exceeds the maximum value of A" );
-    }
-
-    // Check bytes per line validity
-    constexpr B b_max_value = std::numeric_limits<B>::max();
-    if ( bytes_per_line > b_max_value ) {
-      throw std::invalid_argument( "Bytes per line size exceeds the maximum value of B" );
-    }
-
-    if ( DEBUG ) {
-      { // MARK (buffer) MUTEX LOCK
-        std::shared_lock lock( mtx_ );
-        this->debug_is_activated_();
-        BUFFER << std::format( "buffer::allocate(allocation[{}], bytes_per_line[{}], ident[{}]) called ⇣", allocation,
-                               bytes_per_line, ident )
-               << '\n';
-      }
-    }
-
-    { // MARK (buffer) MUTEX LOCK
-      std::shared_lock lock( mtx_ );
-
-      // Check if the buffer is already allocated
-      if ( !nuts_buffer_.empty() ) {
-        if ( DEBUG ) {
-          BUFFER << "  but the buffer is already allocated. it will throw a logic::error" << '\n';
-        }
-        throw std::logic_error( "Buffer is already allocated." );
-      }
-
-      nuts_buffer_unlined_ = nuts_buffer_unlined_t( bytes_per_line, nuts_byte_ );
-      nuts_buffer_ = nuts_buffer_t( allocation, std::move( nuts_buffer_unlined_ ) );
-
-      // clear nuts_unlined_buffer_ and release unused memory.
-      nuts_buffer_unlined_.clear();
-      nuts_buffer_unlined_.shrink_to_fit();
-
-      // Insert metadata into the registry
-      BUFFER << "  nuts_buffer_ address " << addr_hex_() << " (nuts_buffer_) -> " << ident << '\n';
-      insert_metadata_( addr_hex_(), std::nullopt, ident );
-      set_allocated_();
-      registry_->insert( std::make_pair(
-        ident, nuts_buffer_stored_t{ std::move( nuts_buffer_ ), get_allocated_(), std::move( metadata_ ) } ) );
-      unset_allocated_();
-
-      // reset metadata_
-      metadata_ = {};
-
-      // clear nuts_buffer_ and release unused memory.
-      nuts_buffer_.clear();
-      nuts_buffer_.shrink_to_fit();
-
-      BUFFER << "  registry_ metadata address -> " << std::get<0>( registry_->at( ident ).metadata.value() ) << '\n';
-    }
-  }
+    requires ValidIntegerTypes<A> && ValidIntegerTypes<B>;
 
   // MARK: (buffer) buffer registry methods
   // HINT: not implemented yet
@@ -598,4 +442,174 @@ public:
     return target_line[col_idx_++];
   }
 };
+
+// MARK: (buffer) templates definition
+
+template <typename A, typename B>
+buffer::buffer( A allocation, B bytes_per_line )
+  requires ValidIntegerTypes<A> && ValidIntegerTypes<B>
+{
+
+  // Ensure both types are unsigned
+  static_assert( std::is_unsigned_v<A>, "A must be an unsigned type" );
+  static_assert( std::is_unsigned_v<B>, "B must be an unsigned type" );
+
+  // Check allocation size validity
+  constexpr A a_max_value = std::numeric_limits<A>::max();
+  if ( allocation > a_max_value ) {
+    throw std::invalid_argument( "Allocation size exceeds the maximum value of A" );
+  }
+
+  // Check bytes per line validity
+  constexpr B b_max_value = std::numeric_limits<B>::max();
+  if ( bytes_per_line > b_max_value ) {
+    throw std::invalid_argument( "Bytes per line size exceeds the maximum value of B" );
+  }
+
+  if ( DEBUG ) {
+    { // MARK (buffer) MUTEX LOCK
+      std::shared_lock lock( mtx_ );
+      this->debug_is_activated_();
+      BUFFER << std::format( "buffer::buffer(allocation[{}], bytes_per_line[{}]) called ⇣", allocation, bytes_per_line )
+             << '\n';
+    }
+  }
+
+  { // MARK (buffer) MUTEX LOCK
+    std::shared_lock lock( mtx_ );
+    nuts_buffer_unlined_ = nuts_buffer_unlined_t( bytes_per_line, nuts_byte_ );
+    nuts_buffer_ = nuts_buffer_t( allocation, nuts_buffer_unlined_ );
+    insert_metadata_( addr_hex_(), std::nullopt, std::nullopt );
+  }
+}
+
+template <typename A, typename B>
+void buffer::allocate( A allocation, B bytes_per_line )
+  requires ValidIntegerTypes<A> && ValidIntegerTypes<B>
+{
+
+  if ( get_has_registry_() ) {
+    throw std::invalid_argument( "this buffer has a registry. use buffer::allocate_into() instead" );
+  }
+
+  // Ensure both types are unsigned
+  static_assert( std::is_unsigned_v<A>, "A must be an unsigned type" );
+  static_assert( std::is_unsigned_v<B>, "B must be an unsigned type" );
+
+  // Check allocation size validity
+  constexpr A a_max_value = std::numeric_limits<A>::max();
+  if ( allocation > a_max_value ) {
+    throw std::invalid_argument( "Allocation size exceeds the maximum value of A" );
+  }
+
+  // Check bytes per line validity
+  constexpr B b_max_value = std::numeric_limits<B>::max();
+  if ( bytes_per_line > b_max_value ) {
+    throw std::invalid_argument( "Bytes per line size exceeds the maximum value of B" );
+  }
+
+  if ( DEBUG ) {
+    { // MARK (buffer) MUTEX LOCK
+      std::shared_lock lock( mtx_ );
+      this->debug_is_activated_();
+      BUFFER << std::format( "buffer::allocate(allocation[{}], bytes_per_line[{}]) called ⇣", allocation,
+                             bytes_per_line )
+             << '\n';
+    }
+  }
+
+  { // MARK (buffer) MUTEX LOCK
+    std::shared_lock lock( mtx_ );
+
+    // Check if the buffer is already allocated
+    if ( !nuts_buffer_.empty() ) {
+      if ( DEBUG ) {
+        BUFFER << "  but the buffer is already allocated. it will throw a logic::error" << '\n';
+      }
+      throw std::logic_error( "Buffer is already allocated." );
+    }
+
+    nuts_buffer_unlined_ = nuts_buffer_unlined_t( bytes_per_line, nuts_byte_ );
+    nuts_buffer_ = nuts_buffer_t( allocation, nuts_buffer_unlined_ );
+    insert_metadata_( addr_hex_(), std::nullopt, std::nullopt );
+    set_allocated_();
+  }
+}
+
+template <typename A, typename B>
+void buffer::allocate_into( std::string ident, A allocation, B bytes_per_line )
+  requires ValidIntegerTypes<A> && ValidIntegerTypes<B>
+{
+
+  if ( !get_has_registry_() ) {
+    throw std::invalid_argument( "registry_ is false. use buffer::buffer( true ) to initialize the registry" );
+  }
+
+  if ( registry_ == nullptr ) {
+    throw std::invalid_argument( "registry_ is nullptr. use buffer::buffer( true ) to initialize the registry" );
+  }
+
+  // Ensure both types are unsigned
+  static_assert( std::is_unsigned_v<A>, "A must be an unsigned type" );
+  static_assert( std::is_unsigned_v<B>, "B must be an unsigned type" );
+
+  // Check allocation size validity
+  constexpr A a_max_value = std::numeric_limits<A>::max();
+  if ( allocation > a_max_value ) {
+    throw std::invalid_argument( "Allocation size exceeds the maximum value of A" );
+  }
+
+  // Check bytes per line validity
+  constexpr B b_max_value = std::numeric_limits<B>::max();
+  if ( bytes_per_line > b_max_value ) {
+    throw std::invalid_argument( "Bytes per line size exceeds the maximum value of B" );
+  }
+
+  if ( DEBUG ) {
+    { // MARK (buffer) MUTEX LOCK
+      std::shared_lock lock( mtx_ );
+      this->debug_is_activated_();
+      BUFFER << std::format( "buffer::allocate(allocation[{}], bytes_per_line[{}], ident[{}]) called ⇣", allocation,
+                             bytes_per_line, ident )
+             << '\n';
+    }
+  }
+
+  { // MARK (buffer) MUTEX LOCK
+    std::shared_lock lock( mtx_ );
+
+    // Check if the buffer is already allocated
+    if ( !nuts_buffer_.empty() ) {
+      if ( DEBUG ) {
+        BUFFER << "  but the buffer is already allocated. it will throw a logic::error" << '\n';
+      }
+      throw std::logic_error( "Buffer is already allocated." );
+    }
+
+    nuts_buffer_unlined_ = nuts_buffer_unlined_t( bytes_per_line, nuts_byte_ );
+    nuts_buffer_ = nuts_buffer_t( allocation, std::move( nuts_buffer_unlined_ ) );
+
+    // clear nuts_unlined_buffer_ and release unused memory.
+    nuts_buffer_unlined_.clear();
+    nuts_buffer_unlined_.shrink_to_fit();
+
+    // Insert metadata into the registry
+    BUFFER << "  nuts_buffer_ address " << addr_hex_() << " (nuts_buffer_) -> " << ident << '\n';
+    insert_metadata_( addr_hex_(), std::nullopt, ident );
+    set_allocated_();
+    registry_->insert( std::make_pair(
+      ident, nuts_buffer_stored_t{ std::move( nuts_buffer_ ), get_allocated_(), std::move( metadata_ ) } ) );
+    unset_allocated_();
+
+    // reset metadata_
+    metadata_ = {};
+
+    // clear nuts_buffer_ and release unused memory.
+    nuts_buffer_.clear();
+    nuts_buffer_.shrink_to_fit();
+
+    BUFFER << "  registry_ metadata address -> " << std::get<0>( registry_->at( ident ).metadata.value() ) << '\n';
+  }
+}
+
 }
