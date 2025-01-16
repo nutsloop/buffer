@@ -1,7 +1,12 @@
 #pragma once
 
 // MARK: (buffer) buffer debug pre-processor
-#define DEBUG_BUFFER false
+#ifndef DEBUG_BUFFER
+// HINT: default value if not defined elsewhere
+// HINT: set to false also to find out what include c++ std headers are needed.
+#define DEBUG_BUFFER true
+#endif
+
 #if DEBUG_BUFFER == true
 
 #warning "DEBUG_BUFFER is enabled"

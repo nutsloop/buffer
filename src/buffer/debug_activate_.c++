@@ -4,6 +4,7 @@ namespace nutsloop {
 
 void buffer::debug_activate_() {
 
+#if DEBUG_BUFFER
   const bool previous_debug_activated = debug_activated_.exchange( true );
   if ( !log::full_running( "buffer" ) ) {
 
@@ -31,6 +32,7 @@ void buffer::debug_activate_() {
   << " was -> [ " << std::boolalpha << previous_debug_activated << " ]" // previous
   << " => now[ " << std::boolalpha << debug_activated_ << " ] )" << '\n'; // actual
 
+#endif
 }
 
 }
