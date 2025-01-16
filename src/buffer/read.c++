@@ -1,5 +1,6 @@
 #include "buffer.h++"
 
+#include <fstream>
 #include <sstream>
 #include <unistd.h>
 
