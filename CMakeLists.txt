@@ -23,9 +23,6 @@ else()
     set(LOG_ROOT_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/deps/log/")
 endif()
 
-set(LOG_LIB_DIR "/Volumes/a-ssd/CODE/@nutsloop/log/build/debug")
-set(LOG_ROOT_INCLUDE_DIR "/Volumes/a-ssd/CODE/@nutsloop/log/")
-
 # Root include directory
 set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include ${LOG_ROOT_INCLUDE_DIR})
 # Collect all directories (recursively)
