@@ -4,7 +4,7 @@ namespace nutsloop {
 
 bool buffer::get_has_registry_() {
 
-  if ( DEBUG ) {
+  if ( DEBUG_BUFFER_CONST ) {
     { // MARK: (buffer) MUTEX_LOCK
       std::shared_lock lock( mtx_ );
       BUFFER << "buffer::get_has_registry_() called ⇣" << '\n'

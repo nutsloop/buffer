@@ -8,12 +8,12 @@ namespace nutsloop {
 
 void buffer::read( const std::filesystem::path& file_path ) {
 
-  if (DEBUG) {
+  if (DEBUG_BUFFER_CONST) {
     BUFFER << std::format("buffer::read([{}]) called ⇣", file_path.string()) << '\n';
   }
 
   if ( !std::filesystem::exists( file_path ) ) {
-    if ( DEBUG ) {
+    if ( DEBUG_BUFFER_CONST ) {
       BUFFER << "  file do not exist. it will throw std::runtime_error" << '\n';
     }
     throw std::invalid_argument( "File does not exist" );
@@ -31,7 +31,7 @@ void buffer::read( const std::filesystem::path& file_path ) {
   // If the file size is 0, push the empty "unlined" buffer to the main buffer
   // and exit early, as there's nothing more to process.
   if (std::filesystem::file_size( file_path ) == 0) {
-    if (DEBUG) {
+    if (DEBUG_BUFFER_CONST) {
 
       BUFFER << "  file size is 0. buffer is filled with one line and one null byte." << '\n';
     }
@@ -44,7 +44,7 @@ void buffer::read( const std::filesystem::path& file_path ) {
   // Open the file for reading
   std::ifstream file( file_path, std::ios::binary );
   if ( !file.is_open() ) {
-    if ( DEBUG ) {
+    if ( DEBUG_BUFFER_CONST ) {
       BUFFER << "  file could not be opened. it will throw std::runtime_error" << '\n';
     }
     throw std::runtime_error( "File could not be opened" );
@@ -56,12 +56,13 @@ void buffer::read( const std::filesystem::path& file_path ) {
     for ( const auto& c : line ) {
       nuts_buffer_unlined_.push_back( static_cast<nuts_byte_t>( c ) );
     }
+    // HINT: adding a null byte at the end of the line is it necessary?
     nuts_buffer_unlined_.push_back( nuts_byte_ );
     nuts_buffer_.push_back( nuts_buffer_unlined_ );
   }
   insert_metadata_( addr_hex_(), file_path, std::nullopt );
 
-  if (DEBUG) {
+  if (DEBUG_BUFFER_CONST) {
     BUFFER << "  file is read. buffer is filled with the lines of the file." << '\n'
            << "metadata: " << '\n'
            << std::format("  mem_addr: {}", std::get<0>(metadata_)) << '\n'
@@ -84,7 +85,7 @@ void buffer::read( const std::filesystem::path& file_path ) {
 
 void buffer::read( const std::filesystem::path& file_path, const int& fd, const off_t& file_size ) {
 
-  if (DEBUG) {
+  if (DEBUG_BUFFER_CONST) {
     BUFFER << std::format("buffer::read(fd[{}], file_size[{}]) called ⇣", fd, file_size) << '\n';
   }
 
@@ -100,7 +101,7 @@ void buffer::read( const std::filesystem::path& file_path, const int& fd, const 
   // If the file size is 0, push the empty "unlined" buffer to the main buffer
   // and exit early, as there's nothing more to process.
   if (file_size == 0) {
-    if (DEBUG) {
+    if (DEBUG_BUFFER_CONST) {
 
       BUFFER << "  file size is 0. buffer is filled with one line and one null byte." << '\n';
     }
@@ -139,7 +140,11 @@ void buffer::read( const std::filesystem::path& file_path, const int& fd, const 
     // Process the read data
     for ( ssize_t i = 0; i < bytes_read; ++i ) {
 
+      // Check if the current byte is a newline character
       if ( nuts_byte_t byte = temp_buffer[ i ]; byte == nuts_byte_t{ '\n' } ) {
+        // HINT: adding a null byte at the end of the line is it necessary?
+        nuts_buffer_unlined_.push_back( nuts_byte_ );
+
         // Push the current unlined buffer to the main buffer
         nuts_buffer_.push_back( nuts_buffer_unlined_ );
         nuts_buffer_unlined_.clear();
@@ -165,7 +170,7 @@ void buffer::read( const std::filesystem::path& file_path, const int& fd, const 
   }
 
   insert_metadata_( addr_hex_(), file_path, std::nullopt );
-  if (DEBUG) {
+  if (DEBUG_BUFFER_CONST) {
     BUFFER << "  file is read. buffer is filled with the lines of the file." << '\n'
            << "metadata: " << '\n'
            << std::format("  mem_addr: {}", std::get<0>(metadata_)) << '\n'

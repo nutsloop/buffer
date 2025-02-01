@@ -6,13 +6,14 @@ void buffer::debug_activate_() {
 
 #if DEBUG_BUFFER
   const bool previous_debug_activated = debug_activated_.exchange( true );
-  if ( !log::full_running( "buffer" ) ) {
 
-    const log_settings_t log_settings{
-    .ident = "buffer",
-    .filename = "buffer.log",
-    .active = true,
-  };
+    const log_settings_t log_settings(
+    "buffer",
+    "buffer.log",
+    true,
+    std::nullopt,
+    std::nullopt
+    );
     log::activate();
     log::set( log_settings );
 
@@ -22,10 +23,7 @@ void buffer::debug_activate_() {
            << "    ident: " << log_settings.ident << '\n'
            << "    filename: " << log_settings.filename << '\n'
            << "    active: " << std::boolalpha << log_settings.active << '\n';
-  }else {
-    BUFFER << "log::full_running( \"buffer\" ) -> [ true ]" << '\n'
-           << "  log::activate() will not be called." << '\n';
-  }
+
 
   BUFFER << "buffer::debug_activate_() called ⇣" << '\n'
   << "  debug_activated_ ("

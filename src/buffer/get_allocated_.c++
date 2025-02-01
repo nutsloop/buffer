@@ -4,11 +4,11 @@ namespace nutsloop {
 
 bool buffer::get_allocated_(){
 
-  if ( DEBUG ) {
+  if ( DEBUG_BUFFER_CONST ) {
     { // MARK: (buffer) MUTEX_LOCK
       std::shared_lock lock( mtx_ );
       BUFFER << "buffer::get_allocated_() called ⇣" << '\n'
-             << "  read_ -> [ " << std::boolalpha << allocated_ << " ]" << '\n';
+             << "  allocated_ -> [ " << std::boolalpha << allocated_ << " ]" << '\n';
     }
   }
 

@@ -3,7 +3,7 @@
 namespace nutsloop {
 
 buffer::buffer() {
-  if ( DEBUG ) {
+  if ( DEBUG_BUFFER_CONST ) {
     { // MARK (buffer) MUTEX LOCK
       std::shared_lock lock( mtx_ );
       this->debug_is_activated_();
@@ -22,7 +22,7 @@ buffer::buffer( const bool has_registry ) {
     }
   }
 
-  if ( DEBUG ) {
+  if ( DEBUG_BUFFER_CONST ) {
     { // MARK (buffer) MUTEX LOCK
       std::shared_lock lock( mtx_ );
       this->debug_is_activated_();

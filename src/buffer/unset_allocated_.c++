@@ -5,7 +5,7 @@ namespace nutsloop {
 void buffer::unset_allocated_() {
 
   const bool previous_allocated = allocated_.exchange( false );
-  if ( DEBUG ) {
+  if ( DEBUG_BUFFER_CONST ) {
     {// MARK (buffer) MUTEX LOCK
       std::shared_lock lock( mtx_ );
       BUFFER << "buffer::unset_allocated_() called ⇣" << '\n'

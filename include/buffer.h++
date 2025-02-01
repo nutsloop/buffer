@@ -13,7 +13,7 @@
 
 #include "log.h++"
 
-constexpr bool DEBUG = true;
+constexpr bool DEBUG_BUFFER_CONST = true;
 
 #define BUFFER log::stream( "buffer", __FILE__, __LINE__, nutsloop::Level::INFO )
 #define BUFFER_WARN log::stream( "buffer", __FILE__, __LINE__, nutsloop::Level::WARN )
@@ -21,14 +21,14 @@ constexpr bool DEBUG = true;
 
 #else
 
-constexpr bool DEBUG = false;
+constexpr bool DEBUG_BUFFER_CONST = false;
 
 // Mock macros to provide `<<` compatibility
 #include <sstream>
 
-#define BUFFER std::ostream(nullptr) // No-op stream
-#define BUFFER_WARN std::ostream(nullptr) // No-op stream
-#define BUFFER_ERROR std::ostream(nullptr) // No-op stream
+#define BUFFER std::ostream( nullptr ) // No-op stream
+#define BUFFER_WARN std::ostream( nullptr ) // No-op stream
+#define BUFFER_ERROR std::ostream( nullptr ) // No-op stream
 
 #endif
 
@@ -413,7 +413,7 @@ buffer::buffer( A allocation, B bytes_per_line )
     throw std::invalid_argument( "Bytes per line size exceeds the maximum value of B" );
   }
 
-  if ( DEBUG ) {
+  if ( DEBUG_BUFFER_CONST ) {
     { // MARK (buffer) MUTEX LOCK
       std::shared_lock lock( mtx_ );
       this->debug_is_activated_();
@@ -455,7 +455,7 @@ void buffer::allocate( A allocation, B bytes_per_line )
     throw std::invalid_argument( "Bytes per line size exceeds the maximum value of B" );
   }
 
-  if ( DEBUG ) {
+  if ( DEBUG_BUFFER_CONST ) {
     { // MARK (buffer) MUTEX LOCK
       std::shared_lock lock( mtx_ );
       this->debug_is_activated_();
@@ -470,7 +470,7 @@ void buffer::allocate( A allocation, B bytes_per_line )
 
     // Check if the buffer is already allocated
     if ( !nuts_buffer_.empty() ) {
-      if ( DEBUG ) {
+      if ( DEBUG_BUFFER_CONST ) {
         BUFFER << "  but the buffer is already allocated. it will throw a logic::error" << '\n';
       }
       throw std::logic_error( "Buffer is already allocated." );
@@ -512,7 +512,7 @@ void buffer::allocate_into( std::string ident, A allocation, B bytes_per_line )
     throw std::invalid_argument( "Bytes per line size exceeds the maximum value of B" );
   }
 
-  if ( DEBUG ) {
+  if ( DEBUG_BUFFER_CONST ) {
     { // MARK (buffer) MUTEX LOCK
       std::shared_lock lock( mtx_ );
       this->debug_is_activated_();
@@ -527,7 +527,7 @@ void buffer::allocate_into( std::string ident, A allocation, B bytes_per_line )
 
     // Check if the buffer is already allocated
     if ( !nuts_buffer_.empty() ) {
-      if ( DEBUG ) {
+      if ( DEBUG_BUFFER_CONST ) {
         BUFFER << "  but the buffer is already allocated. it will throw a logic::error" << '\n';
       }
       throw std::logic_error( "Buffer is already allocated." );

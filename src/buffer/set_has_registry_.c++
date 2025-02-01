@@ -5,7 +5,7 @@ namespace nutsloop {
 void buffer::set_has_registry_() {
 
   const bool previous_has_registry = has_registry_.exchange( true );
-  if ( DEBUG ) {
+  if ( DEBUG_BUFFER_CONST ) {
     {// MARK (buffer) MUTEX LOCK
       std::shared_lock lock( mtx_ );
       BUFFER << "buffer::set_has_registry_() called ⇣" << '\n'
