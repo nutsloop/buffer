@@ -162,6 +162,33 @@ public:
   std::size_t set_stream_line( std::size_t line_n );
   std::size_t set_stream_col( std::size_t col_n );
   std::size_t end_stream();
+
+  nuts_buffer_t& get();
+  nuts_buffer_unlined_t& get( const size_t& line );
+  nuts_byte_t& get( const size_t& line, const size_t& col );
+
+  std::size_t size() const;
+  std::size_t size( std::size_t line ) const;
+
+  std::string to_string() const;
+  std::string to_string( std::size_t line ) const;
+  std::string to_string( nuts_byte_t byte ) const;
+
+  // Convert an unsigned value to nuts_byte_t
+  template <typename T>
+  nuts_byte_t byte( T value )
+    requires std::is_unsigned_v<T>;
+  nuts_byte_t byte( char c );
+
+  // ONGOING: experimentation.
+  // Overload << for insertion
+  buffer& operator<<( const std::tuple<size_t, size_t, nuts_byte_t>& insertion );
+
+  // Overload >> for deletion
+  buffer& operator>>( const std::tuple<size_t, std::optional<size_t>>& deletion );
+  // utility function for the operator>> acting as a delete action.
+  static std::tuple<size_t, std::optional<size_t>> delete_at( size_t line, std::optional<size_t> col = std::nullopt );
+
 private:
   // MARK: (buffer) mutex methods and fields
   std::shared_mutex mtx_;

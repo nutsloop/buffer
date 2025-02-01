@@ -7,6 +7,7 @@
 #include <sys/fcntl.h>
 #include <sys/stat.h>
 
+#define BUF log::stream( "buf" )
 int main() {
 
   constexpr nutsloop::u8 lines = 3;
