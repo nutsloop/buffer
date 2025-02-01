@@ -157,6 +157,11 @@ public:
   // HINT: not implemented yet
   void write( const int& fd );
 
+  std::optional<nuts_byte_t> stream();
+  std::optional<nuts_byte_t> stream( size_t line ) const;
+  std::size_t set_stream_line( std::size_t line_n );
+  std::size_t set_stream_col( std::size_t col_n );
+  std::size_t end_stream();
 private:
   // MARK: (buffer) mutex methods and fields
   std::shared_mutex mtx_;
@@ -198,6 +203,11 @@ private:
    */
   void unset_allocated_();
   std::atomic<bool> allocated_{ false };
+
+  // MARK: (buffer) stream controls
+  static std::atomic<std::size_t> stream_line_;
+  static std::atomic<std::size_t> stream_col_;
+  static std::atomic<nuts_byte_t> stream_byte_;
 
   // MARK: (buffer) metadata methods and fields
   /**
