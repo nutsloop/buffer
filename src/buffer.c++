@@ -2,6 +2,10 @@
 
 namespace nutsloop {
 
+std::atomic<std::size_t> buffer::stream_line_{0};
+std::atomic<std::size_t> buffer::stream_col_{0};
+std::atomic<nuts_byte_t> buffer::stream_byte_{nuts_byte_t{0x00}};
+
 buffer::buffer() {
   if ( DEBUG_BUFFER_CONST ) {
     { // MARK (buffer) MUTEX LOCK
