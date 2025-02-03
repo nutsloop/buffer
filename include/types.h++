@@ -38,6 +38,16 @@ using nuts_buffer_from_file_t = std::optional<std::filesystem::path>;
 using nuts_buffer_registry_identifier_t = std::optional<std::string>;
 using nuts_buffer_metadata_t = std::tuple<nuts_buffer_mem_addr_t, nuts_buffer_from_file_t, nuts_buffer_registry_identifier_t>;
 
+// MARK: (buffer) buffer stream
+struct nuts_stream_t {
+  bool active;
+  std::size_t offset;
+  std::size_t size;
+  nuts_byte_t byte;
+};
+using nuts_stream_registry_t = std::unordered_map<std::string, nuts_stream_t>;
+using nuts_buffer_stream_t = std::optional<std::tuple<std::array<std::size_t, 2>, nuts_byte_t>>;
+
 // HINT: a container of buffers (not implemented yet)
 struct nuts_buffer_stored_t {
   nuts_buffer_t buffer;
