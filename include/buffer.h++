@@ -161,8 +161,9 @@ public:
   // HINT: not implemented yet
   void write( const int& fd );
 
-  std::optional<nuts_byte_t> stream();
-  std::optional<nuts_byte_t> stream( size_t line ) const;
+  nuts_buffer_stream_t stream();
+  std::optional<nuts_byte_t> stream( std::size_t search_at_line, std::size_t from_col_n, nuts_byte_t until_it_finds );
+  nuts_buffer_stream_t stream( size_t line );
   std::size_t set_stream_line( std::size_t line_n );
   std::size_t set_stream_col( std::size_t col_n );
   std::size_t end_stream();
@@ -236,9 +237,12 @@ private:
   std::atomic<bool> allocated_{ false };
 
   // MARK: (buffer) stream controls
+  static std::atomic<bool> stream_active_;
   static std::atomic<std::size_t> stream_line_;
   static std::atomic<std::size_t> stream_col_;
   static std::atomic<nuts_byte_t> stream_byte_;
+  // HINT: not implemented yet
+  static std::unique_ptr<nuts_stream_registry_t> stream_registry_;
 
   // MARK: (buffer) metadata methods and fields
   /**
