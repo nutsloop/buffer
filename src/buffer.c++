@@ -2,9 +2,12 @@
 
 namespace nutsloop {
 
-std::atomic<std::size_t> buffer::stream_line_{0};
-std::atomic<std::size_t> buffer::stream_col_{0};
-std::atomic<nuts_byte_t> buffer::stream_byte_{nuts_byte_t{0x00}};
+std::atomic<bool> buffer::stream_active_{ false };
+std::atomic<std::size_t> buffer::stream_line_{ 0 };
+std::atomic<std::size_t> buffer::stream_col_{ 0 };
+std::atomic<nuts_byte_t> buffer::stream_byte_{ nuts_byte_t{ 0x00 } };
+// HINT: not implemented yet.
+std::unique_ptr<nuts_stream_registry_t> buffer::stream_registry_{ nullptr };
 
 buffer::buffer() {
   if ( DEBUG_BUFFER_CONST ) {
@@ -21,7 +24,7 @@ buffer::buffer( const bool has_registry ) {
 
   if ( has_registry ) {
     set_has_registry_();
-    if ( registry_ == nullptr) {
+    if ( registry_ == nullptr ) {
       registry_ = std::make_unique<nuts_buffer_registry_t>();
     }
   }
