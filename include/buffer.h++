@@ -1,36 +1,5 @@
 #pragma once
-
-// MARK: (buffer) buffer debug pre-processor
-#ifndef DEBUG_BUFFER
-// HINT: default value if not defined elsewhere
-// HINT: set to false also to find out what include c++ std headers are needed.
-#define DEBUG_BUFFER true
-#endif
-
-#if DEBUG_BUFFER == true
-
-#warning "DEBUG_BUFFER is enabled"
-
-#include "log.h++"
-
-constexpr bool DEBUG_BUFFER_CONST = true;
-
-#define BUFFER log::stream( "buffer", __FILE__, __LINE__, nutsloop::Level::INFO )
-#define BUFFER_WARN log::stream( "buffer", __FILE__, __LINE__, nutsloop::Level::WARN )
-#define BUFFER_ERROR log::stream( "buffer", __FILE__, __LINE__, nutsloop::Level::ERROR )
-
-#else
-
-constexpr bool DEBUG_BUFFER_CONST = false;
-
-// Mock macros to provide `<<` compatibility
-#include <sstream>
-
-#define BUFFER std::ostream( nullptr ) // No-op stream
-#define BUFFER_WARN std::ostream( nullptr ) // No-op stream
-#define BUFFER_ERROR std::ostream( nullptr ) // No-op stream
-
-#endif
+#include "buffer/internal_debug.h++"
 
 #include "types.h++"
 
@@ -56,163 +25,194 @@ public:
    * Constructs a buffer object, optionally initializing it with a registry.
    * If the `has_registry` parameter is true, a new registry is created.
    *
-   * @param has_registry Indicates whether the buffer should initialize with a registry.
-   *                     If set to true, a registry object will be allocated and configured.
-   * @return An instance of the buffer class initialized based on the provided flag.
+   * @param has_registry Indicates whether the buffer should initialize with a
+   * registry. If set to true, a registry object will be allocated and
+   * configured.
+   * @return An instance of the buffer class initialized based on the provided
+   * flag.
    */
-  explicit buffer( bool has_registry );
+  explicit buffer(bool has_registry);
 
   // these are when reading from a file and optionally inserting into registry
   // HINT: not implemented yet
-  buffer( const std::filesystem::path& file_path, std::optional<std::string&> ident );
+  buffer(const std::filesystem::path &file_path,
+         std::optional<std::string &> ident);
   // HINT: not implemented yet
-  buffer( const int& fd, const off_t& file_size, std::optional<std::string&> ident );
+  buffer(const int &fd, const off_t &file_size,
+         std::optional<std::string &> ident);
   // HINT: not implemented yet
-  // create a single line buffer from a string the string must not have a newline.
-  // it may, only once created, converted to a multi-line buffer.
-  explicit buffer( std::string& line );
+  // create a single line buffer from a string the string must not have a
+  // newline. it may, only once created, converted to a multi-line buffer.
+  explicit buffer(std::string &line);
 
   /**
-   * @brief Constructs a `buffer` object with specified allocation size and bytes per line.
+   * @brief Constructs a `buffer` object with specified allocation size and
+   * bytes per line.
    *
-   * @tparam A Type of the allocation size parameter. Must satisfy the `ValidIntegerTypes_C` concept.
-   * @tparam B Type of the bytes per line parameter. Must satisfy the `ValidIntegerTypes_C` concept.
+   * @tparam A Type of the allocation size parameter. Must satisfy the
+   * `ValidIntegerTypes_C` concept.
+   * @tparam B Type of the bytes per line parameter. Must satisfy the
+   * `ValidIntegerTypes_C` concept.
    *
-   * @param allocation An optional parameter specifying the allocation size for the buffer. Defaults to 1.
-   * @param bytes_per_line An optional parameter specifying the number of bytes per line. Defaults to 1.
-   * @requires The types A and B must meet the requirements of the `ValidIntegerTypes_C` concept.
+   * @param allocation An optional parameter specifying the allocation size for
+   * the buffer. Defaults to 1.
+   * @param bytes_per_line An optional parameter specifying the number of bytes
+   * per line. Defaults to 1.
+   * @requires The types A and B must meet the requirements of the
+   * `ValidIntegerTypes_C` concept.
    *
-   * @throws std::invalid_argument If the buffer has an existing registry, if allocation exceeds the maximum value of
-   * type A, or if bytes per line exceed the maximum value of type B.
+   * @throws std::invalid_argument If the buffer has an existing registry, if
+   * allocation exceeds the maximum value of type A, or if bytes per line exceed
+   * the maximum value of type B.
    */
   template <typename A = u8, typename B = u8>
-  explicit buffer( A allocation = 1, B bytes_per_line = 1 )
+  explicit buffer(A allocation = 1, B bytes_per_line = 1)
     requires ValidIntegerTypes<A> && ValidIntegerTypes<B>;
 
   /**
-   * Allocates memory for the buffer based on the specified allocation size and bytes per line.
-   * Performs validation to ensure the parameters meet constraints and preconditions.
-   * Throws exceptions if the buffer is already allocated or if the parameters are invalid.
+   * Allocates memory for the buffer based on the specified allocation size and
+   * bytes per line. Performs validation to ensure the parameters meet
+   * constraints and preconditions. Throws exceptions if the buffer is already
+   * allocated or if the parameters are invalid.
    *
-   * @param allocation The number of allocation units to reserve for the buffer. Must be of an unsigned type.
-   * @param bytes_per_line The number of bytes attributed to each line of the buffer. Must be of an unsigned type.
+   * @param allocation The number of allocation units to reserve for the buffer.
+   * Must be of an unsigned type.
+   * @param bytes_per_line The number of bytes attributed to each line of the
+   * buffer. Must be of an unsigned type.
    *
-   * @throws std::invalid_argument If the buffer has a registry, or if the allocation size or bytes per line exceed
-   * their respective maximum values.
+   * @throws std::invalid_argument If the buffer has a registry, or if the
+   * allocation size or bytes per line exceed their respective maximum values.
    * @throws std::logic_error If the buffer is already allocated.
    */
   template <typename A = u8, typename B = u8>
-  void allocate( A allocation = 1, B bytes_per_line = 1 )
+  void allocate(A allocation = 1, B bytes_per_line = 1)
     requires ValidIntegerTypes<A> && ValidIntegerTypes<B>;
 
   /**
-   * Allocates memory for a buffer and manages its metadata registry. This method initializes
-   * the buffer and inserts the related metadata into the registry. It validates inputs and
-   * ensures correct states before allocation.
+   * Allocates memory for a buffer and manages its metadata registry. This
+   * method initializes the buffer and inserts the related metadata into the
+   * registry. It validates inputs and ensures correct states before allocation.
    *
-   * @param ident The identifier associated with the allocated buffer for use in metadata registry.
-   * @param allocation The number of elements to allocate in the buffer. Must be an unsigned type.
-   * @param bytes_per_line The number of bytes per line in the buffer. Must be an unsigned type.
+   * @param ident The identifier associated with the allocated buffer for use in
+   * metadata registry.
+   * @param allocation The number of elements to allocate in the buffer. Must be
+   * an unsigned type.
+   * @param bytes_per_line The number of bytes per line in the buffer. Must be
+   * an unsigned type.
    *
-   * @throws std::invalid_argument Thrown if the registry is not properly initialized, or if
-   *         the allocation size or bytes per line exceed the allowed maximum values.
-   * @throws std::logic_error Thrown if the buffer is already allocated, preventing duplicate
-   *         allocations.
+   * @throws std::invalid_argument Thrown if the registry is not properly
+   * initialized, or if the allocation size or bytes per line exceed the allowed
+   * maximum values.
+   * @throws std::logic_error Thrown if the buffer is already allocated,
+   * preventing duplicate allocations.
    */
   template <typename A = u8, typename B = u8>
-  void allocate_into( std::string ident, A allocation = 1, B bytes_per_line = 1 )
+  void allocate_into(std::string ident, A allocation = 1, B bytes_per_line = 1)
     requires ValidIntegerTypes<A> && ValidIntegerTypes<B>;
 
   // MARK: (buffer) buffer registry methods
   // HINT: not implemented yet
   void registry();
   // HINT: not implemented yet
-  void registry( std::string& ident );
+  void registry(std::string &ident);
 
   /**
-   * Reads the contents of a file specified by the given file path and processes its data into the buffer.
+   * Reads the contents of a file specified by the given file path and processes
+   * its data into the buffer.
    *
-   * @param file_path The path to the file to be read. It must point to a valid, accessible file on the filesystem.
+   * @param file_path The path to the file to be read. It must point to a valid,
+   * accessible file on the filesystem.
    *
-   * @throws std::invalid_argument If the file does not exist at the specified path.
+   * @throws std::invalid_argument If the file does not exist at the specified
+   * path.
    * @throws std::runtime_error If the file cannot be opened for reading.
    */
-  void read( const std::filesystem::path& file_path );
+  void read(const std::filesystem::path &file_path);
   /**
-   * Reads the content of a file specified by the given file path and file descriptor, processes
-   * it in chunks, and populates the buffer with the read data. Metadata about the read operation
-   * is also recorded.
+   * Reads the content of a file specified by the given file path and file
+   * descriptor, processes it in chunks, and populates the buffer with the read
+   * data. Metadata about the read operation is also recorded.
    *
-   * @param file_path The file path of the file to be read. Used for metadata recording.
+   * @param file_path The file path of the file to be read. Used for metadata
+   * recording.
    * @param fd The file descriptor associated with the file being read.
    * @param file_size The total size of the file in bytes.
    *
-   * @throws std::runtime_error If the `::read` [<fcntl.h>] function return `bytes_read<0`
+   * @throws std::runtime_error If the `::read` [<fcntl.h>] function return
+   * `bytes_read<0`
    */
-  void read( const std::filesystem::path& file_path, const int& fd, const off_t& file_size );
+  void read(const std::filesystem::path &file_path, const int &fd,
+            const off_t &file_size);
 
   // HINT: not implemented yet
-  void read_into( std::string ident, const std::filesystem::path& file_path );
+  void read_into(std::string ident, const std::filesystem::path &file_path);
   // HINT: not implemented yet
-  void read_into( std::string ident, const std::filesystem::path& file_path, const int& fd, const off_t& file_size );
+  void read_into(std::string ident, const std::filesystem::path &file_path,
+                 const int &fd, const off_t &file_size);
 
   // HINT: not implemented yet
-  void write( const std::filesystem::path& file_path );
+  void write(const std::filesystem::path &file_path);
   // HINT: not implemented yet
-  void write( const int& fd );
+  void write(const int &fd);
 
   nuts_buffer_stream_t stream();
-  std::optional<nuts_byte_t> stream( std::size_t search_at_line, std::size_t from_col_n, nuts_byte_t until_it_finds );
-  nuts_buffer_stream_t stream( size_t line );
-  std::size_t set_stream_line( std::size_t line_n );
-  std::size_t set_stream_col( std::size_t col_n );
+  std::optional<nuts_byte_t> stream(std::size_t search_at_line,
+                                    std::size_t from_col_n,
+                                    nuts_byte_t until_it_finds);
+  nuts_buffer_stream_t stream(size_t line);
+  std::size_t set_stream_line(std::size_t line_n);
+  std::size_t set_stream_col(std::size_t col_n);
   std::size_t end_stream();
 
-  nuts_buffer_t& get();
-  nuts_buffer_unlined_t& get( const size_t& line );
-  nuts_byte_t& get( const size_t& line, const size_t& col );
+  nuts_buffer_t &get();
+  nuts_buffer_unlined_t &get(const size_t &line);
+  nuts_byte_t &get(const size_t &line, const size_t &col);
 
   std::size_t size() const;
-  std::size_t size( std::size_t line ) const;
+  std::size_t size(std::size_t line) const;
 
   std::string to_string() const;
-  std::string to_string( std::size_t line ) const;
-  std::string to_string( nuts_byte_t byte ) const;
+  std::string to_string(std::size_t line) const;
+  std::string to_string(nuts_byte_t byte) const;
 
   // Convert an unsigned value to nuts_byte_t
   template <typename T>
-  nuts_byte_t byte( T value )
+  nuts_byte_t byte(T value)
     requires std::is_unsigned_v<T>;
-  nuts_byte_t byte( char c );
+  nuts_byte_t byte(char c);
 
   // ONGOING: experimentation.
   // Overload << for insertion
-  buffer& operator<<( const std::tuple<size_t, size_t, nuts_byte_t>& insertion );
+  buffer &operator<<(const std::tuple<size_t, size_t, nuts_byte_t> &insertion);
 
   // Overload >> for deletion
-  buffer& operator>>( const std::tuple<size_t, std::optional<size_t>>& deletion );
+  buffer &operator>>(const std::tuple<size_t, std::optional<size_t>> &deletion);
   // utility function for the operator>> acting as a delete action.
-  static std::tuple<size_t, std::optional<size_t>> delete_at( size_t line, std::optional<size_t> col = std::nullopt );
+  static std::tuple<size_t, std::optional<size_t>>
+  delete_at(size_t line, std::optional<size_t> col = std::nullopt);
 
 private:
   // MARK: (buffer) mutex methods and fields
   std::shared_mutex mtx_;
 
   /**
-   * Generates the hexadecimal address of the internal nuts_buffer_ memory location.
-   * It uses the address of the internal buffer data and returns it in a formatted string.
+   * Generates the hexadecimal address of the internal nuts_buffer_ memory
+   * location. It uses the address of the internal buffer data and returns it in
+   * a formatted string.
    *
-   * @return A string representation of the memory address of nuts_buffer_ in hexadecimal format.
+   * @return A string representation of the memory address of nuts_buffer_ in
+   * hexadecimal format.
    */
   std::string addr_hex_();
   nuts_buffer_t nuts_buffer_;
   nuts_buffer_unlined_t nuts_buffer_unlined_;
-  nuts_byte_t nuts_byte_{ 0x00 };
+  nuts_byte_t nuts_byte_{0x00};
 
   /**
    * Retrieves the current allocation status of the buffer.
    * The method checks and returns whether the buffer is currently allocated.
-   * It uses a shared lock to ensure thread-safe access to the allocation status.
+   * It uses a shared lock to ensure thread-safe access to the allocation
+   * status.
    *
    * @return A boolean value indicating whether the buffer is allocated.
    */
@@ -222,19 +222,20 @@ private:
    * Ensures thread-safe operation using a mutex and provides debug output
    * if debugging is enabled.
    *
-   * This method transitions the `allocated_` flag to `true` while preserving the
-   * previous state for potential debug logging purposes.
+   * This method transitions the `allocated_` flag to `true` while preserving
+   * the previous state for potential debug logging purposes.
    */
   void set_allocated_();
   /**
    * Marks the buffer as not allocated by updating the allocated_ flag to false.
-   * If debugging is enabled, logs the previous and updated states of the allocated_ flag.
+   * If debugging is enabled, logs the previous and updated states of the
+   * allocated_ flag.
    *
    * This method also ensures thread safety by using a shared lock for accessing
    * and logging the state of the allocated_ flag.
    */
   void unset_allocated_();
-  std::atomic<bool> allocated_{ false };
+  std::atomic<bool> allocated_{false};
 
   // MARK: (buffer) stream controls
   static std::atomic<bool> stream_active_;
@@ -252,12 +253,15 @@ private:
    *
    * @param mem_addr The memory address of type nuts_buffer_mem_addr_t.
    * @param filename An optional file name of type nuts_buffer_from_file_t,
-   *        representing the source file information. Pass std::nullopt if not applicable.
-   * @param ident An optional registry identifier of type nuts_buffer_registry_identifier_t,
-   *        used for tracking or identifying associated metadata. Pass std::nullopt if not applicable.
+   *        representing the source file information. Pass std::nullopt if not
+   * applicable.
+   * @param ident An optional registry identifier of type
+   * nuts_buffer_registry_identifier_t, used for tracking or identifying
+   * associated metadata. Pass std::nullopt if not applicable.
    */
-  void insert_metadata_( const nuts_buffer_mem_addr_t& mem_addr, const nuts_buffer_from_file_t& filename,
-                         const nuts_buffer_registry_identifier_t& ident );
+  void insert_metadata_(const nuts_buffer_mem_addr_t &mem_addr,
+                        const nuts_buffer_from_file_t &filename,
+                        const nuts_buffer_registry_identifier_t &ident);
   nuts_buffer_metadata_t metadata_{};
 
   /**
@@ -267,7 +271,8 @@ private:
    * internal read flag and provides its current value. If debugging is
    * enabled, it also logs the operation and the state of the read flag.
    *
-   * @return The current state of the read flag (true if active, false otherwise).
+   * @return The current state of the read flag (true if active, false
+   * otherwise).
    */
   bool get_read_();
   /**
@@ -278,7 +283,7 @@ private:
    * environments. When in debug mode, log the state change.
    */
   void set_read_();
-  std::atomic<bool> read_{ false };
+  std::atomic<bool> read_{false};
 
   // MARK: (buffer) registry methods and fields
   /**
@@ -289,7 +294,8 @@ private:
    * its activity when debugging is enabled.
    *
    * @return The current state of the `has_registry_` flag, where `true`
-   *         indicates the presence of a registry and `false` indicates otherwise.
+   *         indicates the presence of a registry and `false` indicates
+   * otherwise.
    */
   bool get_has_registry_();
   /**
@@ -299,187 +305,196 @@ private:
    * optionally log the state transitions if debugging is enabled.
    */
   void set_has_registry_();
-  std::atomic<bool> has_registry_{ false };
-  std::unique_ptr<nuts_buffer_registry_t> registry_{ nullptr };
+  std::atomic<bool> has_registry_{false};
+  std::unique_ptr<nuts_buffer_registry_t> registry_{nullptr};
 
+#if DEBUG_BUFFER == true
   // MARK: (buffer) buffer debug methods and fields
-  /**
-   * Checks if debugging is activated for the buffer object.
-   *
-   * If the debug mode is not already activated, this method will activate it by
-   * invoking the `debug_activate_()` method.
-   */
-  void debug_is_activated_();
-  /**
-   * Activates debug logging for the buffer class.
-   * This function enables detailed debug output for the buffer instance by setting
-   * up logging configurations and activating the debug flag. If debug logging
-   * was already active, it logs the transition status.
-   *
-   * The function configures log settings, enabling logs with specific identifiers
-   * and output filenames. Information about the transition of the debug status
-   * and the applied log settings are written to the debug buffer.
-   */
-  void debug_activate_();
-  std::atomic<bool> debug_activated_{ false };
+  void set_internal_debug_();
+  std::unique_ptr<nbuffer::internal_debug> internal_debug_{nullptr};
+#endif
 };
 
 // MARK: (buffer) templates definition
 
 template <typename A, typename B>
-buffer::buffer( A allocation, B bytes_per_line )
+buffer::buffer(A allocation, B bytes_per_line)
   requires ValidIntegerTypes<A> && ValidIntegerTypes<B>
 {
 
+#if DEBUG_BUFFER == true
+  set_internal_debug_();
+#endif
+
   // Ensure both types are unsigned
-  static_assert( std::is_unsigned_v<A>, "A must be an unsigned type" );
-  static_assert( std::is_unsigned_v<B>, "B must be an unsigned type" );
+  static_assert(std::is_unsigned_v<A>, "A must be an unsigned type");
+  static_assert(std::is_unsigned_v<B>, "B must be an unsigned type");
 
   // Check allocation size validity
   constexpr A a_max_value = std::numeric_limits<A>::max();
-  if ( allocation > a_max_value ) {
-    throw std::invalid_argument( "Allocation size exceeds the maximum value of A" );
+  if (allocation > a_max_value) {
+    throw std::invalid_argument(
+        "Allocation size exceeds the maximum value of A");
   }
 
   // Check bytes per line validity
   constexpr B b_max_value = std::numeric_limits<B>::max();
-  if ( bytes_per_line > b_max_value ) {
-    throw std::invalid_argument( "Bytes per line size exceeds the maximum value of B" );
+  if (bytes_per_line > b_max_value) {
+    throw std::invalid_argument(
+        "Bytes per line size exceeds the maximum value of B");
   }
 
-  if ( DEBUG_BUFFER_CONST ) {
-    { // MARK (buffer) MUTEX LOCK
-      std::shared_lock lock( mtx_ );
-      this->debug_is_activated_();
-      BUFFER << std::format( "buffer::buffer(allocation[{}], bytes_per_line[{}]) called ⇣", allocation, bytes_per_line )
-             << '\n';
-    }
+#if DEBUG_BUFFER == true
+  { // MARK (buffer) MUTEX LOCK
+    std::shared_lock lock(mtx_);
+    BUFFER << std::format(
+                  "buffer::buffer(allocation[{}], bytes_per_line[{}]) called ⇣",
+                  allocation, bytes_per_line)
+           << '\n';
   }
+#endif
 
   { // MARK (buffer) MUTEX LOCK
-    std::shared_lock lock( mtx_ );
-    nuts_buffer_unlined_ = nuts_buffer_unlined_t( bytes_per_line, nuts_byte_ );
-    nuts_buffer_ = nuts_buffer_t( allocation, nuts_buffer_unlined_ );
-    insert_metadata_( addr_hex_(), std::nullopt, std::nullopt );
+    std::shared_lock lock(mtx_);
+    nuts_buffer_unlined_ = nuts_buffer_unlined_t(bytes_per_line, nuts_byte_);
+    nuts_buffer_ = nuts_buffer_t(allocation, nuts_buffer_unlined_);
+    insert_metadata_(addr_hex_(), std::nullopt, std::nullopt);
   }
 }
 
 template <typename A, typename B>
-void buffer::allocate( A allocation, B bytes_per_line )
+void buffer::allocate(A allocation, B bytes_per_line)
   requires ValidIntegerTypes<A> && ValidIntegerTypes<B>
 {
 
-  if ( get_has_registry_() ) {
-    throw std::invalid_argument( "this buffer has a registry. use buffer::allocate_into() instead" );
+  if (get_has_registry_()) {
+    throw std::invalid_argument(
+        "this buffer has a registry. use buffer::allocate_into() instead");
   }
 
   // Ensure both types are unsigned
-  static_assert( std::is_unsigned_v<A>, "A must be an unsigned type" );
-  static_assert( std::is_unsigned_v<B>, "B must be an unsigned type" );
+  static_assert(std::is_unsigned_v<A>, "A must be an unsigned type");
+  static_assert(std::is_unsigned_v<B>, "B must be an unsigned type");
 
   // Check allocation size validity
   constexpr A a_max_value = std::numeric_limits<A>::max();
-  if ( allocation > a_max_value ) {
-    throw std::invalid_argument( "Allocation size exceeds the maximum value of A" );
+  if (allocation > a_max_value) {
+    throw std::invalid_argument(
+        "Allocation size exceeds the maximum value of A");
   }
 
   // Check bytes per line validity
   constexpr B b_max_value = std::numeric_limits<B>::max();
-  if ( bytes_per_line > b_max_value ) {
-    throw std::invalid_argument( "Bytes per line size exceeds the maximum value of B" );
+  if (bytes_per_line > b_max_value) {
+    throw std::invalid_argument(
+        "Bytes per line size exceeds the maximum value of B");
   }
 
-  if ( DEBUG_BUFFER_CONST ) {
-    { // MARK (buffer) MUTEX LOCK
-      std::shared_lock lock( mtx_ );
-      this->debug_is_activated_();
-      BUFFER << std::format( "buffer::allocate(allocation[{}], bytes_per_line[{}]) called ⇣", allocation,
-                             bytes_per_line )
-             << '\n';
-    }
+#if DEBUG_BUFFER == true
+  { // MARK (buffer) MUTEX LOCK
+    std::shared_lock lock(mtx_);
+
+    BUFFER << std::format("buffer::allocate(allocation[{}], "
+                          "bytes_per_line[{}]) called ⇣",
+                          allocation, bytes_per_line)
+           << '\n';
   }
+#endif
 
   { // MARK (buffer) MUTEX LOCK
-    std::shared_lock lock( mtx_ );
+    std::shared_lock lock(mtx_);
 
     // Check if the buffer is already allocated
-    if ( !nuts_buffer_.empty() ) {
-      if ( DEBUG_BUFFER_CONST ) {
-        BUFFER << "  but the buffer is already allocated. it will throw a logic::error" << '\n';
-      }
-      throw std::logic_error( "Buffer is already allocated." );
+    if (!nuts_buffer_.empty()) {
+#if DEBUG_BUFFER == true
+      BUFFER << "  but the buffer is already allocated. it will throw a "
+                "logic::error"
+             << '\n';
+#endif
+
+      throw std::logic_error("Buffer is already allocated.");
     }
 
-    nuts_buffer_unlined_ = nuts_buffer_unlined_t( bytes_per_line, nuts_byte_ );
-    nuts_buffer_ = nuts_buffer_t( allocation, nuts_buffer_unlined_ );
-    insert_metadata_( addr_hex_(), std::nullopt, std::nullopt );
+    nuts_buffer_unlined_ = nuts_buffer_unlined_t(bytes_per_line, nuts_byte_);
+    nuts_buffer_ = nuts_buffer_t(allocation, nuts_buffer_unlined_);
+    insert_metadata_(addr_hex_(), std::nullopt, std::nullopt);
     set_allocated_();
   }
 }
 
 template <typename A, typename B>
-void buffer::allocate_into( std::string ident, A allocation, B bytes_per_line )
+void buffer::allocate_into(std::string ident, A allocation, B bytes_per_line)
   requires ValidIntegerTypes<A> && ValidIntegerTypes<B>
 {
 
-  if ( !get_has_registry_() ) {
-    throw std::invalid_argument( "registry_ is false. use buffer::buffer( true ) to initialize the registry" );
+  if (!get_has_registry_()) {
+    throw std::invalid_argument("registry_ is false. use buffer::buffer( true "
+                                ") to initialize the registry");
   }
 
-  if ( registry_ == nullptr ) {
-    throw std::invalid_argument( "registry_ is nullptr. use buffer::buffer( true ) to initialize the registry" );
+  if (registry_ == nullptr) {
+    throw std::invalid_argument("registry_ is nullptr. use buffer::buffer( "
+                                "true ) to initialize the registry");
   }
 
   // Ensure both types are unsigned
-  static_assert( std::is_unsigned_v<A>, "A must be an unsigned type" );
-  static_assert( std::is_unsigned_v<B>, "B must be an unsigned type" );
+  static_assert(std::is_unsigned_v<A>, "A must be an unsigned type");
+  static_assert(std::is_unsigned_v<B>, "B must be an unsigned type");
 
   // Check allocation size validity
   constexpr A a_max_value = std::numeric_limits<A>::max();
-  if ( allocation > a_max_value ) {
-    throw std::invalid_argument( "Allocation size exceeds the maximum value of A" );
+  if (allocation > a_max_value) {
+    throw std::invalid_argument(
+        "Allocation size exceeds the maximum value of A");
   }
 
   // Check bytes per line validity
   constexpr B b_max_value = std::numeric_limits<B>::max();
-  if ( bytes_per_line > b_max_value ) {
-    throw std::invalid_argument( "Bytes per line size exceeds the maximum value of B" );
+  if (bytes_per_line > b_max_value) {
+    throw std::invalid_argument(
+        "Bytes per line size exceeds the maximum value of B");
   }
 
-  if ( DEBUG_BUFFER_CONST ) {
-    { // MARK (buffer) MUTEX LOCK
-      std::shared_lock lock( mtx_ );
-      this->debug_is_activated_();
-      BUFFER << std::format( "buffer::allocate(allocation[{}], bytes_per_line[{}], ident[{}]) called ⇣", allocation,
-                             bytes_per_line, ident )
-             << '\n';
-    }
+#if DEBUG_BUFFER == true
+  { // MARK (buffer) MUTEX LOCK
+    std::shared_lock lock(mtx_);
+    BUFFER << std::format("buffer::allocate(allocation[{}], "
+                          "bytes_per_line[{}], ident[{}]) called ⇣",
+                          allocation, bytes_per_line, ident)
+           << '\n';
   }
+#endif
 
   { // MARK (buffer) MUTEX LOCK
-    std::shared_lock lock( mtx_ );
+    std::shared_lock lock(mtx_);
 
     // Check if the buffer is already allocated
-    if ( !nuts_buffer_.empty() ) {
-      if ( DEBUG_BUFFER_CONST ) {
-        BUFFER << "  but the buffer is already allocated. it will throw a logic::error" << '\n';
-      }
-      throw std::logic_error( "Buffer is already allocated." );
+    if (!nuts_buffer_.empty()) {
+
+#if DEBUG_BUFFER == true
+      BUFFER << "  but the buffer is already allocated. it will throw a "
+                "logic::error"
+             << '\n';
+#endif
+
+      throw std::logic_error("Buffer is already allocated.");
     }
 
-    nuts_buffer_unlined_ = nuts_buffer_unlined_t( bytes_per_line, nuts_byte_ );
-    nuts_buffer_ = nuts_buffer_t( allocation, std::move( nuts_buffer_unlined_ ) );
+    nuts_buffer_unlined_ = nuts_buffer_unlined_t(bytes_per_line, nuts_byte_);
+    nuts_buffer_ = nuts_buffer_t(allocation, std::move(nuts_buffer_unlined_));
 
     // clear nuts_unlined_buffer_ and release unused memory.
     nuts_buffer_unlined_.clear();
     nuts_buffer_unlined_.shrink_to_fit();
 
     // Insert metadata into the registry
-    BUFFER << "  nuts_buffer_ address " << addr_hex_() << " (nuts_buffer_) -> " << ident << '\n';
-    insert_metadata_( addr_hex_(), std::nullopt, ident );
+    BUFFER << "  nuts_buffer_ address " << addr_hex_() << " (nuts_buffer_) -> "
+           << ident << '\n';
+    insert_metadata_(addr_hex_(), std::nullopt, ident);
     set_allocated_();
-    registry_->insert( std::make_pair(
-      ident, nuts_buffer_stored_t{ std::move( nuts_buffer_ ), get_allocated_(), std::move( metadata_ ) } ) );
+    registry_->insert(std::make_pair(
+        ident, nuts_buffer_stored_t{std::move(nuts_buffer_), get_allocated_(),
+                                    std::move(metadata_)}));
     unset_allocated_();
 
     // reset metadata_
@@ -489,15 +504,16 @@ void buffer::allocate_into( std::string ident, A allocation, B bytes_per_line )
     nuts_buffer_.clear();
     nuts_buffer_.shrink_to_fit();
 
-    BUFFER << "  registry_ metadata address -> " << std::get<0>( registry_->at( ident ).metadata.value() ) << '\n';
+    BUFFER << "  registry_ metadata address -> "
+           << std::get<0>(registry_->at(ident).metadata.value()) << '\n';
   }
 }
 
 template <typename T>
-nuts_byte_t buffer::byte( T value )
+nuts_byte_t buffer::byte(T value)
   requires std::is_unsigned_v<T>
 {
-  return static_cast<nuts_byte_t>( value );
+  return static_cast<nuts_byte_t>(value);
 }
 
-}
+} // namespace nutsloop
