@@ -49,9 +49,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # Optimization flags
 set(OPT_FLAGS "-O3 -march=native -flto")
-set(DEBUG_FLAGS "-g -O0 -fno-omit-frame-pointer")
-set(RELEASE_FLAGS "${OPT_FLAGS} -DNDEBUG -DDEBUG_BUFFER=false")
-set(RELWITHDEBINFO_FLAGS "${OPT_FLAGS} -g -DNDEBUG -DDEBUG_BUFFER=false")
+set(DEBUG_FLAGS "-g -O0 -fno-omit-frame-pointer -DDEBUG_BUFFER=true -DDEBUG_LOG=false -DEXPERIMENTAL_INSTANCE=true")
+set(RELEASE_FLAGS "${OPT_FLAGS} -DNDEBUG -DDEBUG_BUFFER=false -DDEBUG_LOG=false -DEXPERIMENTAL_INSTANCE=true")
+set(RELWITHDEBINFO_FLAGS "${OPT_FLAGS} -g -DNDEBUG -DDEBUG_BUFFER=false -DDEBUG_LOG=false -DEXPERIMENTAL_INSTANCE=true")
 set(EXTRA_FLAGS "-fexperimental-library")
 
 # Combine flags for each build type
@@ -76,10 +76,8 @@ if (BUILD_SHARED_LIBS)
     )
 endif ()
 
-# Add the executable for testing purposes only in debug mode and if BUILD_MAIN_EXE is set to ON
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    if (BUILD_MAIN_EXE)
-        add_executable(_buffer main.c++)
-        target_link_libraries(_buffer PRIVATE ${PROJECT_NAME})
-    endif ()
+# Add the executable for testing purposes only if BUILD_MAIN_EXE is set to ON
+if (BUILD_MAIN_EXE)
+    add_executable(_buffer main.c++)
+    target_link_libraries(_buffer PRIVATE ${PROJECT_NAME})
 endif ()
