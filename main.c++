@@ -113,7 +113,7 @@ int main() {
 
   buffer buf_stream;
   buf_stream.read( path );
-  const nutsloop::log_settings_t settings( "buf", "buf.log", true, std::nullopt, std::nullopt );
+  nutsloop::log_settings_t settings( "buf", "buf.log", true, std::nullopt, std::nullopt );
 
   log::set( settings );
 
