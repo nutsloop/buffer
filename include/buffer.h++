@@ -170,6 +170,7 @@ public:
 
   std::size_t size() const;
   std::size_t size(std::size_t line) const;
+  std::size_t size_line_strip_null_byte(std::size_t line) const;
 
   std::string to_string() const;
   std::string to_string(std::size_t line) const;
