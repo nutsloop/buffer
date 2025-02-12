@@ -21,14 +21,12 @@
 #include "log.h++"
 #warning "DEBUG_BUFFER is enabled"
 
-
 #define BUFFER log::stream("buffer", __FILE__, __LINE__, nutsloop::Level::INFO)
-#define BUFFER_WARN                                                            \
-log::stream("buffer", __FILE__, __LINE__, nutsloop::Level::WARN)
-#define BUFFER_ERROR                                                           \
-log::stream("buffer", __FILE__, __LINE__, nutsloop::Level::ERROR)
+#define BUFFER_WARN log::stream("buffer", __FILE__, __LINE__, nutsloop::Level::WARN)
+#define BUFFER_ERROR log::stream("buffer", __FILE__, __LINE__, nutsloop::Level::ERROR)
+#define BUFFER_NO_HEAD log::stream("buffer")
 
-namespace nutsloop::nbuffer{
+namespace nutsloop::nbuffer {
 
 class internal_debug {
 
@@ -36,6 +34,6 @@ public:
   internal_debug();
   ~internal_debug();
 };
-}
+} // namespace nutsloop::nbuffer
 
 #endif
