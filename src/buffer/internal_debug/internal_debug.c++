@@ -24,6 +24,7 @@ internal_debug::internal_debug() {
 internal_debug::~internal_debug() {
 
   // TODO: once log library as the close method remember to close the file first
+  BUFFER_NO_HEAD << '\n' << "internal debug ( \"buffer\" ) deactivated..." << '\n';
   log::flush("buffer");
 }
 
