@@ -14,6 +14,9 @@ option(USE_RELATIVE_PATHS "Use relative paths for libraries and includes" OFF)
 option(BUILD_SHARED_LIBS "Build a shared library" OFF)
 option(BUILD_MAIN_EXE "Build the main executable include in the repository for testing purpose" OFF)
 
+# tests options
+option(SIZE_TEST "Build executable to test the buffer.size() method" OFF)
+
 # Configure based on the switch
 if(USE_RELATIVE_PATHS)
     set(LOG_LIB_DIR "../log/build/release")
@@ -80,4 +83,9 @@ endif ()
 if (BUILD_MAIN_EXE)
     add_executable(_buffer main.c++)
     target_link_libraries(_buffer PRIVATE ${PROJECT_NAME})
+endif ()
+
+if (SIZE_TEST)
+    add_executable(_size tests/buffer/size.c++)
+    target_link_libraries(_size PRIVATE ${PROJECT_NAME})
 endif ()
