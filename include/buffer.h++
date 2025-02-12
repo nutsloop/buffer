@@ -155,6 +155,7 @@ public:
   // HINT: not implemented yet
   void write(const int &fd);
 
+  // MARK: (buffer) buffer stream methods
   nuts_buffer_stream_t stream();
   std::optional<nuts_byte_t> stream(std::size_t search_at_line,
                                     std::size_t from_col_n,
@@ -245,6 +246,8 @@ private:
   static std::atomic<nuts_byte_t> stream_byte_;
   // HINT: not implemented yet
   static std::unique_ptr<nuts_stream_registry_t> stream_registry_;
+  // MARK: (buffer) buffer stream private methods
+  std::size_t stream_line_strip_null_byte_() const;
 
   // MARK: (buffer) metadata methods and fields
   /**
