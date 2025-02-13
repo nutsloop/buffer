@@ -165,9 +165,9 @@ public:
   nuts_buffer_unlined_t &get(const size_t &line);
   nuts_byte_t &get(const size_t &line, const size_t &col);
 
-  std::size_t size() const;
-  std::size_t size(std::size_t line) const;
-  std::size_t size_line_strip_null_byte(std::size_t line) const;
+  [[nodiscard]] std::size_t size() const;
+  [[nodiscard]] std::size_t size(std::size_t line,bool strip_null_byte = false) const;
+  [[nodiscard]] std::vector<std::array<std::size_t, 2>> sizes(bool strip_null_byte = false) const;
 
   std::string to_string() const;
   std::string to_string(std::size_t line) const;
