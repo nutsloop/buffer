@@ -45,8 +45,9 @@ struct nuts_stream_t {
   std::size_t size;
   nuts_byte_t byte;
 };
-using nuts_stream_registry_t = std::unordered_map<std::string, nuts_stream_t>;
 using nuts_buffer_stream_t = std::optional<std::tuple<std::array<std::size_t, 2>, nuts_byte_t>>;
+// HINT: a container of streams (not implemented yet)
+using nuts_stream_registry_t = std::unordered_map<std::string, nuts_stream_t>;
 
 // HINT: a container of buffers (not implemented yet)
 struct nuts_buffer_stored_t {
