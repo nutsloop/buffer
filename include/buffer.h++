@@ -35,11 +35,9 @@ public:
 
   // these are when reading from a file and optionally inserting into registry
   // HINT: not implemented yet
-  buffer(const std::filesystem::path &file_path,
-         std::optional<std::string &> ident);
+  buffer(const std::filesystem::path &file_path, std::optional<std::string &> ident);
   // HINT: not implemented yet
-  buffer(const int &fd, const off_t &file_size,
-         std::optional<std::string &> ident);
+  buffer(const int &fd, const off_t &file_size, std::optional<std::string &> ident);
   // HINT: not implemented yet
   // create a single line buffer from a string the string must not have a
   // newline. it may, only once created, converted to a multi-line buffer.
@@ -141,14 +139,13 @@ public:
    * @throws std::runtime_error If the `::read` [<fcntl.h>] function return
    * `bytes_read<0`
    */
-  void read(const std::filesystem::path &file_path, const int &fd,
-            const off_t &file_size);
+  void read(const std::filesystem::path &file_path, const int &fd, const off_t &file_size);
 
   // HINT: not implemented yet
   void read_into(std::string ident, const std::filesystem::path &file_path);
   // HINT: not implemented yet
-  void read_into(std::string ident, const std::filesystem::path &file_path,
-                 const int &fd, const off_t &file_size);
+  void read_into(std::string ident, const std::filesystem::path &file_path, const int &fd,
+                 const off_t &file_size);
 
   // HINT: not implemented yet
   void write(const std::filesystem::path &file_path);
@@ -157,8 +154,7 @@ public:
 
   // MARK: (buffer) buffer stream methods
   nuts_buffer_stream_t stream();
-  std::optional<nuts_byte_t> stream(std::size_t search_at_line,
-                                    std::size_t from_col_n,
+  std::optional<nuts_byte_t> stream(std::size_t search_at_line, std::size_t from_col_n,
                                     nuts_byte_t until_it_finds);
   nuts_buffer_stream_t stream(size_t line);
   std::size_t set_stream_line(std::size_t line_n);
@@ -337,23 +333,20 @@ buffer::buffer(A allocation, B bytes_per_line)
   // Check allocation size validity
   constexpr A a_max_value = std::numeric_limits<A>::max();
   if (allocation > a_max_value) {
-    throw std::invalid_argument(
-        "Allocation size exceeds the maximum value of A");
+    throw std::invalid_argument("Allocation size exceeds the maximum value of A");
   }
 
   // Check bytes per line validity
   constexpr B b_max_value = std::numeric_limits<B>::max();
   if (bytes_per_line > b_max_value) {
-    throw std::invalid_argument(
-        "Bytes per line size exceeds the maximum value of B");
+    throw std::invalid_argument("Bytes per line size exceeds the maximum value of B");
   }
 
 #if DEBUG_BUFFER == true
   { // MARK (buffer) MUTEX LOCK
     std::shared_lock lock(mtx_);
-    BUFFER << std::format(
-                  "buffer::buffer(allocation[{}], bytes_per_line[{}]) called ⇣",
-                  allocation, bytes_per_line)
+    BUFFER << std::format("buffer::buffer(allocation[{}], bytes_per_line[{}]) called ⇣", allocation,
+                          bytes_per_line)
            << '\n';
   }
 #endif
@@ -372,8 +365,7 @@ void buffer::allocate(A allocation, B bytes_per_line)
 {
 
   if (get_has_registry_()) {
-    throw std::invalid_argument(
-        "this buffer has a registry. use buffer::allocate_into() instead");
+    throw std::invalid_argument("this buffer has a registry. use buffer::allocate_into() instead");
   }
 
   // Ensure both types are unsigned
@@ -383,15 +375,13 @@ void buffer::allocate(A allocation, B bytes_per_line)
   // Check allocation size validity
   constexpr A a_max_value = std::numeric_limits<A>::max();
   if (allocation > a_max_value) {
-    throw std::invalid_argument(
-        "Allocation size exceeds the maximum value of A");
+    throw std::invalid_argument("Allocation size exceeds the maximum value of A");
   }
 
   // Check bytes per line validity
   constexpr B b_max_value = std::numeric_limits<B>::max();
   if (bytes_per_line > b_max_value) {
-    throw std::invalid_argument(
-        "Bytes per line size exceeds the maximum value of B");
+    throw std::invalid_argument("Bytes per line size exceeds the maximum value of B");
   }
 
 #if DEBUG_BUFFER == true
@@ -448,15 +438,13 @@ void buffer::allocate_into(std::string ident, A allocation, B bytes_per_line)
   // Check allocation size validity
   constexpr A a_max_value = std::numeric_limits<A>::max();
   if (allocation > a_max_value) {
-    throw std::invalid_argument(
-        "Allocation size exceeds the maximum value of A");
+    throw std::invalid_argument("Allocation size exceeds the maximum value of A");
   }
 
   // Check bytes per line validity
   constexpr B b_max_value = std::numeric_limits<B>::max();
   if (bytes_per_line > b_max_value) {
-    throw std::invalid_argument(
-        "Bytes per line size exceeds the maximum value of B");
+    throw std::invalid_argument("Bytes per line size exceeds the maximum value of B");
   }
 
 #if DEBUG_BUFFER == true
@@ -492,13 +480,12 @@ void buffer::allocate_into(std::string ident, A allocation, B bytes_per_line)
     nuts_buffer_unlined_.shrink_to_fit();
 
     // Insert metadata into the registry
-    BUFFER << "  nuts_buffer_ address " << addr_hex_() << " (nuts_buffer_) -> "
-           << ident << '\n';
+    BUFFER << "  nuts_buffer_ address " << addr_hex_() << " (nuts_buffer_) -> " << ident << '\n';
     insert_metadata_(addr_hex_(), std::nullopt, ident);
     set_allocated_();
-    registry_->insert(std::make_pair(
-        ident, nuts_buffer_stored_t{std::move(nuts_buffer_), get_allocated_(),
-                                    std::move(metadata_)}));
+    registry_->insert(
+        std::make_pair(ident, nuts_buffer_stored_t{std::move(nuts_buffer_), get_allocated_(),
+                                                   std::move(metadata_)}));
     unset_allocated_();
 
     // reset metadata_
