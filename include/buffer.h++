@@ -39,8 +39,8 @@ public:
   // HINT: not implemented yet
   buffer(const int &fd, const off_t &file_size, std::optional<std::string &> ident);
   // HINT: not implemented yet
-  // create a single line buffer from a string the string must not have a
-  // newline. it may, only once created, converted to a multi-line buffer.
+  // create a single line buffer from a string the string must not have a null byte terminator.
+  // It may, only once created, converted to a multi-line buffer.
   explicit buffer(std::string &line);
 
   /**
