@@ -1,7 +1,7 @@
 #include "buffer.h++"
 
-#include "color.h++"
-using namespace nutsloop::ncolor;
+#include "ansi.h++"
+using namespace nutsloop::nansi;
 
 namespace nutsloop {
 
@@ -10,77 +10,71 @@ std::size_t buffer::size() const {
   std::size_t size = nuts_buffer_.size();
 #if DEBUG_BUFFER == true
   BUFFER << '\n'
-         << "  buffer::size() called ⇣"_s.red().bold() << '\n'
-         << std::format("    nuts_buffer_ size -> [ {} ]", size) << '\n'
-         << "    size is the amount of elements(lines) in the vector container"_s.magenta() << '\n';
+         << "  buffer::size() called ⇣"_.green().bold() << '\n'
+         << ansi("    nuts_buffer_ size -> [ {} ]", size).yellow() << '\n'
+         << "    size is the amount of elements(lines) in the vector container"_.magenta() << '\n';
 #endif
 
   return size;
 }
 
-std::size_t buffer::size(const std::size_t line) const {
+std::size_t buffer::size(const std::size_t line, const bool strip_null_byte) const {
 
   if (line >= nuts_buffer_.size()) {
     std::size_t size = nuts_buffer_.size();
 
 #if DEBUG_BUFFER == true
     BUFFER_ERROR << '\n'
-                 << color(std::format("  buffer::size(line[{}]) called ⇣", line)).red().bold()
+                 << ansi("  buffer::size(line[{}]) called ⇣", line).red().bold()
                  << '\n'
-                 << std::format("    nuts_buffer_ size -> [ {} ]", size) << '\n'
-                 << std::format("    line -> [ {} ]", line) << '\n'
-                 << std::format("    line is out of range [ {} ]", line) << '\n'
-                 << "    throw std::out_of_range" << '\n';
+                 << ansi("    nuts_buffer_ size -> [ {} ]", size).green() << '\n'
+                 << ansi("    line -> [ {} ]", line).red() << '\n'
+                 << "    throw std::out_of_range"_.bold() << '\n';
 #endif
 
     throw std::out_of_range(std::format("line {} is out of range", line));
   }
 
-  std::size_t size = nuts_buffer_[line].size();
+  std::size_t size = nuts_buffer_[line].size() - (strip_null_byte ? 1 : 0);
+  const ansi strip_null_byte_string = strip_null_byte ? "true"_.blue().bold() : "false"_.red().bold();
 
 #if DEBUG_BUFFER == true
   BUFFER << '\n'
-         << color(std::format("  buffer::size(line[{}]) called ⇣", line)).red().bold() << '\n'
-         << std::format("    nuts_buffer_unlined_ size -> [ {} ]", size) << '\n'
-         << "    size includes the null byte"_s.magenta() << '\n';
+         << ansi("  buffer::size(line[{}],strip_null_byte[{}]) called ⇣", line, strip_null_byte).green().bold() << '\n'
+         << "    strip_null_byte -> [" << strip_null_byte_string << "]" << '\n'
+         << ansi("    nuts_buffer_unlined_ size -> [ {} ]", size ).yellow() << '\n'
+         << "    size " << (strip_null_byte ? "NOT " : "") << "includes the null byte"_.magenta() << '\n';
 #endif
 
   return size;
 }
 
-std::size_t buffer::size_line_strip_null_byte(std::size_t line) const {
-  if (line >= nuts_buffer_.size()) {
-    std::size_t size = nuts_buffer_.size();
+std::vector<std::array<std::size_t, 2>> buffer::sizes(const bool strip_null_byte) const {
 
-#if DEBUG_BUFFER == true
-    BUFFER_ERROR << '\n'
-                 << color(
-                        std::format("  buffer::size_line_strip_null_byte(line[{}]) called ⇣", line))
-                        .red()
-                        .bold()
-                 << '\n'
-                 << std::format("    nuts_buffer_ size -> [ {} ]", size) << '\n'
-                 << std::format("    line -> [ {} ]", line) << '\n'
-                 << std::format("    line is out of range [ {} ]", line) << '\n'
-                 << "    throw std::out_of_range" << '\n';
-#endif
-
-    throw std::out_of_range(std::format("line {} is out of range", line));
-  }
-
-  std::size_t size = nuts_buffer_[line].size() - 1;
+  const std::size_t size = nuts_buffer_.size();
+  const ansi strip_null_byte_string = strip_null_byte ? "true"_.blue().bold() : "false"_.red().bold();
+  std::vector<std::array<std::size_t, 2>> sizes(size);
 
 #if DEBUG_BUFFER == true
   BUFFER << '\n'
-         << color(std::format("  buffer::size_line_strip_null_byte(line[{}]) called ⇣", line))
-                .red()
-                .bold()
-         << '\n'
-         << std::format("    nuts_buffer_unlined_ size -> [ {} ]", size) << '\n'
-         << "    size NOT includes the null byte"_s.magenta() << '\n';
+         << ansi("  buffer::sizes(strip_null_byte[{}]) called ⇣", strip_null_byte).green().bold() << '\n'
+         << "    strip_null_byte -> [" << strip_null_byte_string << "]" << '\n'
+         << ansi("    nuts_buffer_ size -> [ {} ]", size).yellow() << '\n'
+         << "    size is the amount of elements(lines) in the vector container"_.magenta() << '\n';
 #endif
 
-  return size;
+  for (std::size_t i = 0; i < size; ++i) {
+    const std::size_t line_size = nuts_buffer_[i].size() - (strip_null_byte ? 1 : 0);
+    sizes[i] = {i,line_size};
+#if DEBUG_BUFFER == true
+    BUFFER << '\n'
+           << "  buffer::sizes() iterating⇣"_.green().bold() << '\n'
+           << ansi("    nuts_buffer_unlined size @[{}]->[ {} ]", i, line_size).yellow() << '\n'
+           << "    size " << (strip_null_byte ? "NOT " : "") << "includes the null byte"_.magenta() << '\n';
+#endif
+  }
+
+  return sizes;
 }
 
 } // namespace nutsloop
