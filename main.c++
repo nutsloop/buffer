@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+using namespace nutsloop;
 /*
 
 the JavaScript file used for this example.
@@ -40,7 +41,11 @@ int main() {
 
   constexpr nutsloop::u8 lines = 3;
   constexpr nutsloop::u16 bytes_per_line = 20;
-  constexpr auto path = "/Volumes/a-ssd/CODE/nutsloop/jsx/index.jsx";
+  const auto path = std::getenv( "JSX_FILE_BUFFER" );
+  if ( path == nullptr ) {
+    std::cerr << "JSX_FILE_BUFFER environment variable not set" << std::endl;
+    exit( 1 );
+  }
 
   nutsloop::buffer buffer_empty;
   buffer_empty.allocate( nutsloop::u8{ 24 }, nutsloop::u16{ 100 } );
@@ -111,7 +116,7 @@ int main() {
   // MARK: work with stream methods
   // small tokenizer base on jsx file
 
-  buffer buf_stream;
+  nutsloop::buffer buf_stream;
   buf_stream.read( path );
   nutsloop::log_settings_t settings( "buf", "buf.log", true, std::nullopt, std::nullopt );
 
@@ -796,6 +801,5 @@ int main() {
   stream_thread_1.join();*/
 
   log::flush( "buf" );
-  log::flush( "buffer" );
   return 0;
 }
