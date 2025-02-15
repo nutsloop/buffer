@@ -3,17 +3,22 @@
 #include "ansi.h++"
 
 #include <cstdlib>
+#include <iostream>
 
-using namespace nutsloop::nansi;
-
+using namespace nutsloop;
 int main() {
 
   nutsloop::log_settings_t settings("size", "buf_size.log", true, std::nullopt, std::nullopt);
-  log::set(settings);
-  log::activate();
-  const auto size_log = log::get_instance("size");
+  nutsloop::log::set(settings);
+  nutsloop::log::activate();
+  const auto size_log = nutsloop::log::get_instance("size");
 
-  constexpr auto path = "/Volumes/a-ssd/CODE/nutsloop/jsx/index.jsx";
+  const auto path = std::getenv( "JSX_FILE_BUFFER" );
+  if ( path == nullptr ) {
+    std::cerr << "JSX_FILE_BUFFER environment variable not set" << std::endl;
+    exit( 1 );
+  }
+
   nutsloop::buffer buf;
   buf.read(path);
 
