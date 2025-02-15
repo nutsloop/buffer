@@ -165,10 +165,10 @@ public:
   nuts_buffer_unlined_t &get(const size_t &line);
   nuts_byte_t &get(const size_t &line, const size_t &col);
 
-  // GOOD: size methods and tests
-  [[nodiscard]] std::size_t size() const;
-  [[nodiscard]] std::size_t size(std::size_t line, bool strip_null_byte = false) const;
-  [[nodiscard]] std::vector<std::array<std::size_t, 2>> sizes(bool strip_null_byte = false) const;
+  // GOOD: size methods
+  [[nodiscard]] nuts_buffer_size_t size() const;
+  [[nodiscard]] nuts_buffer_size_line_t size(std::size_t line, bool strip_null_byte = false) const;
+  [[nodiscard]] nuts_buffer_sizes_t sizes(bool strip_null_byte = false) const;
 
   std::string to_string() const;
   std::string to_string(std::size_t line) const;
