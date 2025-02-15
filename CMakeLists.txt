@@ -7,39 +7,28 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # CMAKE_BINARY_DIR should be build
 set(BUILD_DIR ${CMAKE_SOURCE_DIR}/build)
-set(INSTALL_DIR /usr/local/bin)
 
-# Define an option to switch between configurations
 option(USE_RELATIVE_PATHS "Use relative paths for libraries and includes" OFF)
 option(BUILD_SHARED_LIBS "Build a shared library" OFF)
 option(BUILD_MAIN_EXE "Build the main executable include in the repository for testing purpose" OFF)
 
 # tests options
+option(BUFFER_TEST "Build executable to test the buffer() constructors" OFF)
 option(SIZE_TEST "Build executable to test the buffer.size() method" OFF)
 
 # Configure based on the switch
 if(USE_RELATIVE_PATHS)
     set(LOG_LIB_DIR "../log/build/release")
-    set(LOG_ROOT_INCLUDE_DIR "../log/")
+    set(LOG_ROOT_INCLUDE_DIR "../log/include")
+    set(ANSI_ROOT_INCLUDE_DIR "../ansi/include")
 else()
     set(LOG_LIB_DIR "${CMAKE_SOURCE_DIR}/deps/log/build/release")
-    set(LOG_ROOT_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/deps/log/")
+    set(LOG_ROOT_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/deps/log/include")
+    set(ANSI_ROOT_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/deps/ansi/include")
 endif()
 
 # Root include directory
-set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include ${LOG_ROOT_INCLUDE_DIR})
-# Collect all directories (recursively)
-file(GLOB_RECURSE HEADER_DIRS LIST_DIRECTORIES true "${INCLUDE_DIR}/*")
-# Initialize the include directories list with the root
-set(INCLUDE_DIRS ${INCLUDE_DIR})
-# Filter directories explicitly
-foreach (DIR ${HEADER_DIRS})
-    if (IS_DIRECTORY "${DIR}")
-        list(APPEND INCLUDE_DIRS "${DIR}")
-    endif ()
-endforeach ()
-# Remove duplicates (just in case)
-list(REMOVE_DUPLICATES INCLUDE_DIRS)
+set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include ${LOG_ROOT_INCLUDE_DIR} ${ANSI_ROOT_INCLUDE_DIR})
 
 # Source files
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
@@ -65,7 +54,7 @@ set(CMAKE_CXX_FLAGS_MINSIZEREL "${RELEASE_FLAGS} -Os ${EXTRA_FLAGS}")
 
 # Add the library
 add_library(${PROJECT_NAME} buffer.h++ ${SOURCES})
-target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIR})
 
 # Link the external static library
 # Link the external library and add its include path
@@ -86,6 +75,11 @@ if (BUILD_MAIN_EXE)
 endif ()
 
 if (SIZE_TEST)
-    add_executable(_size tests/buffer/size.c++)
-    target_link_libraries(_size PRIVATE ${PROJECT_NAME})
+    add_executable(size_test tests/buffer/size.c++)
+    target_link_libraries(size_test PRIVATE ${PROJECT_NAME})
+endif ()
+
+if (BUFFER_TEST)
+    add_executable(buffer_test tests/buffer/buffer.c++)
+    target_link_libraries(buffer_test PRIVATE ${PROJECT_NAME})
 endif ()
