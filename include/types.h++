@@ -93,3 +93,8 @@ concept ValidIntegerTypes = std::same_as<T, u8> ||
   std::same_as<T, size_t>;
 
 }
+
+// MARK: (buffer) size types
+using nuts_buffer_size_t = std::size_t;
+using nuts_buffer_size_line_t = std::size_t;
+using nuts_buffer_sizes_t = std::vector<std::array<std::size_t, 2>>;
