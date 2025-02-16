@@ -2,10 +2,18 @@
 
 namespace nutsloop {
 
-// FIXME: all the stream methods aren't thread safe.
-// TODO: DEBUG LOG
+/*
+ * FIXME: all the stream methods aren't thread safe.
+ *        necessary to implement a registry that handles different buffer stream
+ *        now if there are more than one instance of buffer and "all" of the instances use ::stream
+ *        the global variable are updated and set for all the instances of buffer.
+ */
 
-// TODO: handle exceptions
+/*
+ * TODO: DEBUG LOG
+ * TODO: handle exceptions
+ * TODO: overload to return also the null byte
+*/
 nuts_buffer_stream_t buffer::stream() {
 
   if (stream_active_.load() == false) {
