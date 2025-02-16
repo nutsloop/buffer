@@ -5,9 +5,6 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# CMAKE_BINARY_DIR should be build
-set(BUILD_DIR ${CMAKE_SOURCE_DIR}/build)
-
 option(USE_RELATIVE_PATHS "Use relative paths for libraries and includes" OFF)
 option(BUILD_SHARED_LIBS "Build a shared library" OFF)
 option(BUILD_MAIN_EXE "Build the main executable include in the repository for testing purpose" OFF)
@@ -34,11 +31,6 @@ set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include ${LOG_ROOT_INCLUDE_DIR} ${ANSI_ROOT_
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 file(GLOB_RECURSE SOURCES ${SRC_DIR}/*.c++)
 
-# Set output directories for executables and libraries
-# Define output directories for executables and libraries
-# The ${CMAKE_BINARY_DIR} changes dynamically based on the build directory.
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-
 # Optimization flags
 set(OPT_FLAGS "-O3 -march=native -flto")
 set(DEBUG_FLAGS "-g -O0 -fno-omit-frame-pointer -DDEBUG_BUFFER=true -DDEBUG_LOG=false -DEXPERIMENTAL_INSTANCE=true")
@@ -53,7 +45,7 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${RELWITHDEBINFO_FLAGS} ${EXTRA_FLAGS}")
 set(CMAKE_CXX_FLAGS_MINSIZEREL "${RELEASE_FLAGS} -Os ${EXTRA_FLAGS}")
 
 # Add the library
-add_library(${PROJECT_NAME} buffer.h++ ${SOURCES})
+add_library(${PROJECT_NAME} include/buffer.h++ ${SOURCES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIR})
 
 # Link the external static library
