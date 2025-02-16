@@ -11,7 +11,8 @@ option(BUILD_MAIN_EXE "Build the main executable include in the repository for t
 
 # tests options
 option(BUFFER_TEST "Build executable to test the buffer() constructors" OFF)
-option(SIZE_TEST "Build executable to test the buffer.size() method" OFF)
+option(STREAM_TEST "Build executable to test the buffer.stream() methods" OFF)
+option(SIZE_TEST "Build executable to test the buffer.size() methods" OFF)
 
 # Configure based on the switch
 if(USE_RELATIVE_PATHS)
@@ -74,4 +75,9 @@ endif ()
 if (BUFFER_TEST)
     add_executable(buffer_test tests/buffer/buffer.c++)
     target_link_libraries(buffer_test PRIVATE ${PROJECT_NAME})
+endif ()
+
+if (STREAM_TEST)
+    add_executable(stream_test tests/buffer/stream.c++)
+    target_link_libraries(stream_test PRIVATE ${PROJECT_NAME})
 endif ()
