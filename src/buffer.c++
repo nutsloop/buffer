@@ -7,9 +7,11 @@ buffer::buffer() {
   set_internal_debug_();
   { // MARK (buffer) MUTEX LOCK
     std::shared_lock lock(mtx_);
-    BUFFER << '\n'
-           << "  buffer::buffer() called ⇣"_.green().bold() << '\n'
-           << "    Initializing an empty buffer instance without allocating any resources." << '\n';
+    BUFFER
+        << '\n'
+        << "  buffer::buffer() called ⇣"_.green().bold() << '\n'
+        << "    initializing an empty buffer instance without allocating any resources."_.magenta()
+        << '\n';
   }
 #endif
 }
@@ -29,11 +31,13 @@ buffer::buffer(const bool has_registry) {
 #if DEBUG_BUFFER == true
   { // MARK (buffer) MUTEX LOCK
     std::shared_lock lock(mtx_);
-    BUFFER << std::format("buffer::buffer([{}]) called ⇣", has_registry ? "true" : "false") << '\n'
-           << "  Initializes an empty buffer instance without allocating any "
-              "resources."
-           << '\n'
-           << "  has_registry -> [ " << std::boolalpha << has_registry << " ]" << '\n';
+    const ansi has_registry_string = has_registry ? "true"_.blue().bold() : "false"_.red().bold();
+    BUFFER
+        << '\n'
+        << ansi("  buffer::buffer([{}]) called ⇣", has_registry).green().bold() << '\n'
+        << "    initializing an empty buffer instance without allocating any resources."_.magenta()
+        << '\n'
+        << "    has_registry -> [ " << has_registry_string << " ]"_.white().bold() << '\n';
   }
 #endif
 }
