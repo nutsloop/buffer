@@ -170,6 +170,12 @@ public:
   [[nodiscard]] nuts_buffer_size_line_t size(std::size_t line, bool strip_null_byte = false) const;
   [[nodiscard]] nuts_buffer_sizes_t sizes(bool strip_null_byte = false) const;
 
+  // MARK: (buffer) metadata methods
+  nuts_buffer_metadata_t &get_metadata();
+  std::string get_metadata_buffer_address();
+  std::string get_metadata_file_path();
+  std::string get_metadata_registry_identifier();
+
   std::string to_string() const;
   std::string to_string(std::size_t line) const;
   std::string to_string(nuts_byte_t byte) const;
@@ -237,14 +243,6 @@ private:
   std::atomic<bool> allocated_{false};
 
   // MARK: (buffer) stream controls
-  static std::atomic<bool> stream_active_;
-  static std::atomic<std::size_t> stream_line_;
-  static std::atomic<std::size_t> stream_col_;
-  static std::atomic<nuts_byte_t> stream_byte_;
-  // HINT: not implemented yet
-  static std::unique_ptr<nuts_stream_registry_t> stream_registry_;
-  // MARK: (buffer) buffer stream private methods
-  std::size_t stream_line_strip_null_byte_() const;
 
   // MARK: (buffer) metadata methods and fields
   /**
