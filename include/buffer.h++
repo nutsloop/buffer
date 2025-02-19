@@ -153,13 +153,28 @@ public:
   void write(const int &fd);
 
   // MARK: (buffer) buffer stream methods
-  nuts_buffer_stream_t stream();
-  std::optional<nuts_byte_t> stream(std::size_t search_at_line, std::size_t from_col_n,
+  class stream {
+  public:
+    friend class buffer;
+    explicit stream(buffer *buf_ref) : buffer_(buf_ref) {}
+    // MARK: (buffer) buffer stream methods
+    nuts_buffer_stream_t next(bool strip_null_byte = false);
+    std::optional<nuts_byte_t> next(std::size_t search_at_line, std::size_t from_col_n,
                                     nuts_byte_t until_it_finds);
-  nuts_buffer_stream_t stream(size_t line);
-  std::size_t set_stream_line(std::size_t line_n);
-  std::size_t set_stream_col(std::size_t col_n);
-  std::size_t end_stream();
+    nuts_buffer_stream_t next(size_t line, bool strip_null_byte = false);
+    std::size_t move_at_line(std::size_t line_n);
+    std::size_t move_at_column(std::size_t col_n);
+    std::size_t ends();
+
+  private:
+    std::shared_mutex mtx_;
+    std::atomic<bool> active_;
+    std::atomic<std::size_t> line_;
+    std::atomic<std::size_t> column_;
+    std::atomic<nuts_byte_t> byte_;
+    buffer *buffer_;
+  };
+  stream buffer_stream();
 
   nuts_buffer_t &get();
   nuts_buffer_unlined_t &get(const size_t &line);
