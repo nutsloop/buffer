@@ -42,6 +42,7 @@ void buffer::read(const std::filesystem::path &file_path) {
     nuts_buffer_unlined_.push_back(nuts_byte_);
     nuts_buffer_.push_back(nuts_buffer_unlined_);
     insert_metadata_(addr_hex_(), file_path, std::nullopt);
+
     return;
   }
 
@@ -124,6 +125,7 @@ void buffer::read(const std::filesystem::path &file_path, const int &fd,
     nuts_buffer_unlined_.push_back(nuts_byte_);
     nuts_buffer_.push_back(nuts_buffer_unlined_);
     insert_metadata_(addr_hex_(), file_path, std::nullopt);
+
     return;
   }
 
