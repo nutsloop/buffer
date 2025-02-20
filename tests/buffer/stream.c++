@@ -90,7 +90,7 @@ int main() {
       << "stream doesn't return the null_byte"_.magenta().underline() << '\n';
 
 
-  auto stream = buf_stream.buffer_stream();
+  auto stream = buf_stream.make_stream();
   while (auto nuts_buffer_stream = stream.next(true)) {
 
     const auto [location, byte] = *nuts_buffer_stream;
@@ -115,7 +115,7 @@ int main() {
 
   // MARK: work with stream methods
   // small tokenizer base on jsx file
-  auto tokenizer = buf_stream.buffer_stream();
+  auto tokenizer = buf_stream.make_stream();
   stream_log->ostream()
       << '\n'
       << "iterating the nuts_buffer_stream_t returned from buffer::stream::next()"_.bold() << '\n'
