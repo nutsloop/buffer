@@ -152,7 +152,7 @@ public:
   // HINT: not implemented yet
   void write(const int &fd);
 
-  // MARK: (buffer) buffer stream methods
+  // MARK: (buffer) stream class
   class stream {
   public:
     friend class buffer;
@@ -174,7 +174,7 @@ public:
     std::atomic<nuts_byte_t> byte_;
     buffer *buffer_;
   };
-  stream buffer_stream();
+  stream make_stream();
 
   nuts_buffer_t &get();
   nuts_buffer_unlined_t &get(const size_t &line);
