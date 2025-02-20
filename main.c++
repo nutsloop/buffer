@@ -98,14 +98,14 @@ int main() {
   BUFFER << buf_fromfd.to_string( 2 ) << '\n';
 
   // Simulate uploading byte by byte
-  auto stream_byte = buf_fromfd.buffer_stream();
+  auto stream_byte = buf_fromfd.make_stream();
   while ( auto byte_opt = stream_byte.next() ) {
     auto [ loc_, byte ] = *byte_opt;
     std::cout << static_cast<char>( byte ) << std::flush;
     // std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
   }
 
-  auto stream_line = buf_fromfd.buffer_stream();
+  auto stream_line = buf_fromfd.make_stream();
   while ( auto byte_opt = stream_line.next( static_cast<std::size_t>(2) )) {
     auto [ _loc, byte ] = *byte_opt;
     std::cout << static_cast<char>( byte ) << std::flush;
