@@ -2,7 +2,7 @@
 
 namespace nutsloop {
 
-buffer::stream buffer::buffer_stream() {
+buffer::stream buffer::make_stream() {
 #if DEBUG_BUFFER == true
   BUFFER << '\n'
          << "  buffer::buffer_stream() called ⇣"_.green().bold() << '\n'
