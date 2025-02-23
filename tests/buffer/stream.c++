@@ -90,7 +90,7 @@ int main() {
       << "stream doesn't return the null_byte"_.magenta().underline() << '\n';
 
 
-  auto stream = buf_stream.make_stream();
+  auto stream = buf_stream.stream();
   while (auto nuts_buffer_stream = stream.next(true)) {
 
     const auto [location, byte] = *nuts_buffer_stream;
@@ -105,7 +105,7 @@ int main() {
                           << ansi("  byte->({})",
                                   (byte == buf_stream.byte('\n')
                                        ? "\\n"_.green().to_string()
-                                       : ansi(buf_stream.to_string(byte)).green().to_string()))
+                                       : ansi(buf_stream.to_string(y,x)).green().to_string()))
                                  .bold()
                           << '\n';
 
@@ -115,7 +115,7 @@ int main() {
 
   // MARK: work with stream methods
   // small tokenizer base on jsx file
-  auto tokenizer = buf_stream.make_stream();
+  auto tokenizer = buf_stream.stream();
   stream_log->ostream()
       << '\n'
       << "iterating the nuts_buffer_stream_t returned from buffer::stream::next()"_.bold() << '\n'
@@ -145,7 +145,7 @@ int main() {
 
     // let's print everything that is alphanumeric
     if (std::isalnum(static_cast<char>(byte))) {
-      stream_log->ostream() << ansi(buf_stream.to_string(byte)).green().to_string();
+      stream_log->ostream() << ansi(buf_stream.to_string(y,x)).green().to_string();
     }
 
     // let's play with the dot operator
