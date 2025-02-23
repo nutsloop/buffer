@@ -17,6 +17,10 @@ void buffer::insert_metadata_( const nuts_buffer_mem_addr_t& mem_addr, const nut
   metadata_ = std::make_tuple( mem_addr, filename, ident );
 }
 
+void buffer::reset_metadata_() {
+  metadata_ = nuts_buffer_metadata_t{};
+}
+
 nuts_buffer_metadata_t &buffer::get_metadata() {
 
 #if DEBUG_BUFFER == true
