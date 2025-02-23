@@ -20,7 +20,7 @@ namespace nutsloop {
  * TODO: handle exceptions.
  * TODO: overload to return also the null byte.
  */
-nuts_buffer_stream_t buffer::stream::next(const bool strip_null_byte) {
+nuts_buffer_stream_t buffer::stream_::next(const bool strip_null_byte) {
 
   if (!active_.load()) {
     active_.store(true);
@@ -41,6 +41,16 @@ nuts_buffer_stream_t buffer::stream::next(const bool strip_null_byte) {
 
     // If we've finished the current line, return '\n'
     if (column_.load() == buffer_->size(line_.load()) - (strip_null_byte ? 1 : 0)) {
+
+      if (buffer_->get_from_string_()) {
+
+        line_.store(0);          // Reset line index
+        column_.store(0);        // Reset column index
+        byte_.store(buffer_->byte(0x00)); // Reset byte
+
+        return std::nullopt;
+      }
+
       return nuts_buffer_stream_t({
           {line_.fetch_add(1), column_.exchange(0)},
         buffer_->byte(0x0A) // Return newline
@@ -57,7 +67,7 @@ nuts_buffer_stream_t buffer::stream::next(const bool strip_null_byte) {
 // this method start a stream at a given line at a given column until it finds the given byte.
 // it increments the column index until it finds the given byte.
 // it returns all the bytes until it finds the given byte.
-std::optional<nuts_byte_t> buffer::stream::next(const std::size_t search_at_line,
+std::optional<nuts_byte_t> buffer::stream_::next(const std::size_t search_at_line,
                                           const std::size_t from_col_n,
                                           const nuts_byte_t until_it_finds) {
 
@@ -86,7 +96,7 @@ std::optional<nuts_byte_t> buffer::stream::next(const std::size_t search_at_line
 
 // TODO: must be adapted to modifiers
 // TODO: handle exceptions
-nuts_buffer_stream_t buffer::stream::next(const size_t line, const bool strip_null_byte) {
+nuts_buffer_stream_t buffer::stream_::next(const size_t line, const bool strip_null_byte) {
 
   if (!active_.load()) {
     active_.store(true);
@@ -118,7 +128,7 @@ nuts_buffer_stream_t buffer::stream::next(const size_t line, const bool strip_nu
 }
 
 // TODO: handle exceeding sizes
-std::size_t buffer::stream::move_at_line(const std::size_t line_n) {
+std::size_t buffer::stream_::move_at_line(const std::size_t line_n) {
 
   if (!active_.load()) {
     // TODO: explain things
@@ -136,7 +146,7 @@ std::size_t buffer::stream::move_at_line(const std::size_t line_n) {
 }
 
 // TODO: handle exceeding sizes
-std::size_t buffer::stream::move_at_column(const std::size_t col_n) {
+std::size_t buffer::stream_::move_at_column(const std::size_t col_n) {
 
   if (!active_.load()) {
     // TODO: explain things
@@ -153,7 +163,7 @@ std::size_t buffer::stream::move_at_column(const std::size_t col_n) {
   }
 }
 
-std::size_t buffer::stream::ends() {
+std::size_t buffer::stream_::ends() {
 
   if (!active_.load()) {
     // TODO: explain things
