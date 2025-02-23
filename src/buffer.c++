@@ -42,4 +42,109 @@ buffer::buffer(const bool has_registry) {
 #endif
 }
 
+// ONGOING
+
+buffer::buffer(const std::string &str) {
+#if DEBUG_BUFFER == true
+  set_internal_debug_();
+#endif
+
+  reset();
+
+  for (std::size_t i = 0; i < str.size(); ++i) {
+    if (i == str.size() - 1 && str[i] == '\0') break; // Ignore only trailing null
+    nuts_buffer_unlined_.push_back(byte(str[i]));
+  }
+
+  // reset the byte to null.
+  byte( 0x00 );
+  nuts_buffer_unlined_.push_back(nuts_byte_);
+  nuts_buffer_.emplace_back(nuts_buffer_unlined_);
+  insert_metadata_(addr_hex_(), std::nullopt, std::nullopt);
+  set_allocated_();
+  set_from_string_();
+}
+
+buffer::buffer(const char *c_str) {
+#if DEBUG_BUFFER == true
+  set_internal_debug_();
+#endif
+
+  reset();
+
+  const std::size_t len = std::strlen(c_str);
+  for (std::size_t i = 0; i <= len; ++i) {  // <= ensures '\0' is included
+    nuts_buffer_unlined_.push_back(byte(c_str[i]));
+  }
+
+  // reset the byte to null.
+  byte( 0x00 );
+
+  nuts_buffer_.emplace_back(nuts_buffer_unlined_);
+  insert_metadata_(addr_hex_(), std::nullopt, std::nullopt);
+  set_allocated_();
+  set_from_string_();
+}
+
+buffer::buffer(char *c_str) {
+#if DEBUG_BUFFER == true
+  set_internal_debug_();
+#endif
+
+  reset();
+
+  const std::size_t len = std::strlen(c_str);
+  for (std::size_t i = 0; i <= len; ++i) {  // <= ensures '\0' is included
+    nuts_buffer_unlined_.push_back(byte(c_str[i]));
+  }
+
+  // reset the byte to null.
+  byte(0x00);
+
+  nuts_buffer_.emplace_back(nuts_buffer_unlined_);
+  insert_metadata_(addr_hex_(), std::nullopt, std::nullopt);
+  set_allocated_();
+  set_from_string_();
+
+  delete[] c_str;
+}
+
+ buffer::buffer(nuts_buffer_unlined_t &bytes) {
+#if DEBUG_BUFFER == true
+  set_internal_debug_();
+#endif
+
+  reset();
+
+  if (bytes.back() != byte(0x00)) {
+    bytes.push_back(byte(0x00));
+  }
+
+  nuts_buffer_unlined_ = bytes;
+  nuts_buffer_.emplace_back(nuts_buffer_unlined_);
+  insert_metadata_(addr_hex_(), std::nullopt, std::nullopt);
+  set_allocated_();
+
+}
+
+ buffer::buffer(nuts_buffer_t &data) {
+#if DEBUG_BUFFER == true
+  set_internal_debug_();
+#endif
+
+  reset();
+
+  for (auto &line : data) {
+    if (line.back() != byte(0x00)) {
+      line.push_back( byte(0x00) );
+    }
+    nuts_buffer_unlined_.insert(nuts_buffer_unlined_.end(), line.begin(), line.end());
+  }
+
+  nuts_buffer_.emplace_back( nuts_buffer_unlined_ );
+  insert_metadata_(addr_hex_(), std::nullopt, std::nullopt);
+  set_allocated_();
+
+}
+
 } // namespace nutsloop
