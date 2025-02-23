@@ -12,13 +12,32 @@ using namespace nbuffer::types;
 
 class buffer {
 
+  // MARK: (buffer) stream class
+  class stream_ {
+  public:
+    explicit stream_(buffer *buf_ref) : buffer_(buf_ref) {}
+    // MARK: (buffer) buffer stream methods
+    nuts_buffer_stream_t next(bool strip_null_byte = false);
+    std::optional<nuts_byte_t> next(std::size_t search_at_line, std::size_t from_col_n,
+                                    nuts_byte_t until_it_finds);
+    nuts_buffer_stream_t next(size_t line, bool strip_null_byte = false);
+    std::size_t move_at_line(std::size_t line_n);
+    std::size_t move_at_column(std::size_t col_n);
+    std::size_t ends();
+
+  private:
+
+    friend class buffer;
+    std::shared_mutex mtx_;
+    std::atomic<bool> active_;
+    std::atomic<std::size_t> line_;
+    std::atomic<std::size_t> column_;
+    std::atomic<nuts_byte_t> byte_;
+    buffer *buffer_;
+  };
+  friend class stream_;
+
 public:
-  /**
-   * Default constructor for the buffer class.
-   * Initializes an empty buffer instance without allocating any resources.
-   *
-   * @return A newly constructed buffer object with default state.
-   */
   buffer();
 
   /**
@@ -38,10 +57,13 @@ public:
   buffer(const std::filesystem::path &file_path, std::optional<std::string &> ident);
   // HINT: not implemented yet
   buffer(const int &fd, const off_t &file_size, std::optional<std::string &> ident);
-  // HINT: not implemented yet
-  // create a single line buffer from a string the string must not have a null byte terminator.
-  // It may, only once created, converted to a multi-line buffer.
-  explicit buffer(std::string &line);
+
+  // create a single line buffer from a string or C-style string.
+  explicit buffer(const std::string &str);
+  explicit buffer(const char *c_str);
+  explicit buffer(char *c_str);
+  explicit buffer(nuts_buffer_unlined_t &bytes);
+  explicit buffer(nuts_buffer_t &data);
 
   /**
    * @brief Constructs a `buffer` object with specified allocation size and
@@ -152,29 +174,9 @@ public:
   // HINT: not implemented yet
   void write(const int &fd);
 
-  // MARK: (buffer) stream class
-  class stream {
-  public:
-    friend class buffer;
-    explicit stream(buffer *buf_ref) : buffer_(buf_ref) {}
-    // MARK: (buffer) buffer stream methods
-    nuts_buffer_stream_t next(bool strip_null_byte = false);
-    std::optional<nuts_byte_t> next(std::size_t search_at_line, std::size_t from_col_n,
-                                    nuts_byte_t until_it_finds);
-    nuts_buffer_stream_t next(size_t line, bool strip_null_byte = false);
-    std::size_t move_at_line(std::size_t line_n);
-    std::size_t move_at_column(std::size_t col_n);
-    std::size_t ends();
+  // MARK: (buffer) buffer stream
 
-  private:
-    std::shared_mutex mtx_;
-    std::atomic<bool> active_;
-    std::atomic<std::size_t> line_;
-    std::atomic<std::size_t> column_;
-    std::atomic<nuts_byte_t> byte_;
-    buffer *buffer_;
-  };
-  stream make_stream();
+  stream_ stream();
 
   nuts_buffer_t &get();
   nuts_buffer_unlined_t &get(const size_t &line);
@@ -193,13 +195,38 @@ public:
 
   std::string to_string() const;
   std::string to_string(std::size_t line) const;
-  std::string to_string(nuts_byte_t byte) const;
+  std::string to_string(std::size_t line, std::size_t col) const;
 
-  // Convert an unsigned value to nuts_byte_t
-  template <typename T>
-  nuts_byte_t byte(T value)
-    requires std::is_unsigned_v<T>;
+  /**
+   * Converts the given character to a byte and assigns it to the internal buffer state.
+   *
+   * This function takes a single character, converts it into a byte, and updates the `nuts_byte_`
+   * property.
+   *
+   * @param c The character to be converted into a byte.
+   * @return The converted byte stored in `nuts_byte_`.
+   *
+   * @note The `nuts_byte_` property is initialized to `0x00` when a `buffer` instance is created.
+   * Calling this method updates `nuts_byte_` with the last converted character.
+   * To reset `nuts_byte_` back to `0x00`, use `byte('\0')` or `byte(0x00)`.
+   */
   nuts_byte_t byte(char c);
+  /**
+   * Converts the given byte to a char and assigns it to the internal buffer state.
+   *
+   * This function takes a single byte, converts it into a char, and updates the `nuts_byte_`
+   * property.
+   *
+   * @param b The byte to be converted into a char.
+   * @return The converted char stored in `nuts_byte_`.
+   *
+   * @note The `nuts_byte_` property is initialized to `0x00` when a `buffer` instance is created.
+   * Calling this method updates `nuts_byte_` with the last converted character.
+   * To reset `nuts_byte_` back to `0x00`, use `byte('\0')` or `byte(0x00)`.
+   */
+  char byte(nuts_byte_t b);
+
+  void reset();
 
   // ONGOING: experimentation.
   // Overload << for insertion
@@ -276,7 +303,14 @@ private:
   void insert_metadata_(const nuts_buffer_mem_addr_t &mem_addr,
                         const nuts_buffer_from_file_t &filename,
                         const nuts_buffer_registry_identifier_t &ident);
+  void reset_metadata_();
   nuts_buffer_metadata_t metadata_{};
+
+  // type of buffer
+  bool get_from_string_() const;
+  void set_from_string_();
+  void unset_from_string_();
+  std::atomic<bool> from_string_{false};
 
   /**
    * Retrieves the current state of the read flag.
@@ -297,6 +331,7 @@ private:
    * environments. When in debug mode, log the state change.
    */
   void set_read_();
+  void unset_read_();
   std::atomic<bool> read_{false};
 
   // MARK: (buffer) registry methods and fields
@@ -319,6 +354,7 @@ private:
    * optionally log the state transitions if debugging is enabled.
    */
   void set_has_registry_();
+  void unset_has_registry_();
   std::atomic<bool> has_registry_{false};
   std::unique_ptr<nuts_buffer_registry_t> registry_{nullptr};
 
@@ -512,13 +548,6 @@ void buffer::allocate_into(std::string ident, A allocation, B bytes_per_line)
     BUFFER << "  registry_ metadata address -> "
            << std::get<0>(registry_->at(ident).metadata.value()) << '\n';
   }
-}
-
-template <typename T>
-nuts_byte_t buffer::byte(T value)
-  requires std::is_unsigned_v<T>
-{
-  return static_cast<nuts_byte_t>(value);
 }
 
 } // namespace nutsloop
