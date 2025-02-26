@@ -2,7 +2,7 @@
 
 namespace nutsloop {
 
-void buffer::reset() {
+void buffer::reset(const bool registry/*=true*/) {
 
 #if DEBUG_BUFFER == true
   { // MARK: (buffer) MUTEX_LOCK
@@ -19,7 +19,9 @@ void buffer::reset() {
   reset_metadata_();
   unset_from_string_();
   unset_read_();
-  unset_has_registry_();
+  if (registry) {
+    unset_has_registry_();
+  }
   unset_allocated_();
 }
 
