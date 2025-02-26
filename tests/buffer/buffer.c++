@@ -37,6 +37,7 @@ int main() {
   }
 
   buffer_log->ostream()
+      << '\n'
       << "expected the buffer to have size -> (1) despite of having a new line in the string"_
              .bold()
       << '\n'
