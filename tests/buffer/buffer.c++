@@ -103,6 +103,48 @@ int main() {
              .bold()
       << '\n'
       << ansi("buffer::size({})", buf_from_string.size()) << std::endl;
+
+  // TODO: change the buffer types to this for handling multy byte stuff
+  // ✅ UTF-8 Character Example: '😎' (U+1F60E) → 4 Bytes
+
+  // ✅ ASCII Example: "Hi!"
+  std::vector<std::byte> ascii_H = { std::byte{0x48} };  // 'H'
+  std::vector<std::byte> ascii_i = { std::byte{0x69} };  // 'i'
+  std::vector<std::byte> ascii_ex = { std::byte{0x21} }; // '!'
+
+  // ✅ UTF-8 Example (Needs to be stored together as a vector)
+  std::vector<std::byte> utf8_vector = { std::byte{0xF0}, std::byte{0x9F}, std::byte{0x98}, std::byte{0x8E} };
+
+  // ✅ Organizing Into Nested Buffer Structure
+  std::vector<std::vector<std::byte>> ascii_group = { ascii_H, ascii_i, ascii_ex }; // ASCII characters separately
+  std::vector<std::vector<std::byte>> utf8_group = { utf8_vector }; // UTF-8 grouped together
+
+  std::vector<std::vector<std::vector<std::byte>>> buffer = { ascii_group, utf8_group };
+
+  // ✅ Printing Buffer Content
+  buffer_log->ostream() << "Buffer Content:\n";
+  for (const auto& group : buffer) {
+    for (const auto& char_bytes : group) {
+      for (std::byte b : char_bytes) {
+        buffer_log->ostream()<< std::hex << std::to_integer<int>(b) << " ";
+      }
+      buffer_log->ostream() << "| ";
+    }
+    buffer_log->ostream() << "\n";
+  }
+
+  std::string result;
+
+  for (const auto& group : buffer) {
+    for (const auto& char_bytes : group) {
+      for (std::byte b : char_bytes) {
+        result += static_cast<char>(std::to_integer<int>(b));  // Convert bytes back to chars
+      }
+    }
+  }
+
+  buffer_log->ostream() << result;
+
   buffer_log->flush();
   return EXIT_SUCCESS;
 }
