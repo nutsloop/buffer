@@ -1,5 +1,6 @@
 #include "buffer.h++"
 
+// TODO: Check If All bytes in the buffer are ASCII (uint8_t-Only).
 namespace nutsloop {
 
 buffer::buffer() {
