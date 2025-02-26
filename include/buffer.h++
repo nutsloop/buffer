@@ -26,7 +26,6 @@ class buffer {
     std::size_t ends();
 
   private:
-
     friend class buffer;
     std::shared_mutex mtx_;
     std::atomic<bool> active_;
@@ -226,7 +225,7 @@ public:
    */
   char byte(nuts_byte_t b);
 
-  void reset();
+  void reset(bool registry=true);
 
   // ONGOING: experimentation.
   // Overload << for insertion
@@ -401,12 +400,9 @@ buffer::buffer(A allocation, B bytes_per_line)
   }
 #endif
 
-  { // MARK (buffer) MUTEX LOCK
-    std::shared_lock lock(mtx_);
-    nuts_buffer_unlined_ = nuts_buffer_unlined_t(bytes_per_line, nuts_byte_);
-    nuts_buffer_ = nuts_buffer_t(allocation, nuts_buffer_unlined_);
-    insert_metadata_(addr_hex_(), std::nullopt, std::nullopt);
-  }
+  nuts_buffer_unlined_ = nuts_buffer_unlined_t(bytes_per_line, nuts_byte_);
+  nuts_buffer_ = nuts_buffer_t(allocation, nuts_buffer_unlined_);
+  insert_metadata_(addr_hex_(), std::nullopt, std::nullopt);
 }
 
 template <typename A, typename B>
@@ -445,25 +441,21 @@ void buffer::allocate(A allocation, B bytes_per_line)
   }
 #endif
 
-  { // MARK (buffer) MUTEX LOCK
-    std::shared_lock lock(mtx_);
-
-    // Check if the buffer is already allocated
-    if (!nuts_buffer_.empty()) {
+  // Check if the buffer is already allocated
+  if (!nuts_buffer_.empty()) {
 #if DEBUG_BUFFER == true
-      BUFFER << "  but the buffer is already allocated. it will throw a "
-                "logic::error"
-             << '\n';
+    BUFFER << "  but the buffer is already allocated. it will throw a "
+              "logic::error"
+           << '\n';
 #endif
 
-      throw std::logic_error("Buffer is already allocated.");
-    }
-
-    nuts_buffer_unlined_ = nuts_buffer_unlined_t(bytes_per_line, nuts_byte_);
-    nuts_buffer_ = nuts_buffer_t(allocation, nuts_buffer_unlined_);
-    insert_metadata_(addr_hex_(), std::nullopt, std::nullopt);
-    set_allocated_();
+    throw std::logic_error("Buffer is already allocated.");
   }
+
+  nuts_buffer_unlined_ = nuts_buffer_unlined_t(bytes_per_line, nuts_byte_);
+  nuts_buffer_ = nuts_buffer_t(allocation, nuts_buffer_unlined_);
+  insert_metadata_(addr_hex_(), std::nullopt, std::nullopt);
+  set_allocated_();
 }
 
 template <typename A, typename B>
@@ -472,13 +464,13 @@ void buffer::allocate_into(std::string ident, A allocation, B bytes_per_line)
 {
 
   if (!get_has_registry_()) {
-    throw std::invalid_argument("registry_ is false. use buffer::buffer( true "
-                                ") to initialize the registry");
+    throw std::invalid_argument(
+        "registry_ is false. use buffer::buffer( true ) to initialize the registry");
   }
 
   if (registry_ == nullptr) {
-    throw std::invalid_argument("registry_ is nullptr. use buffer::buffer( "
-                                "true ) to initialize the registry");
+    throw std::invalid_argument(
+        "registry_ is nullptr. use buffer::buffer( true ) to initialize the registry");
   }
 
   // Ensure both types are unsigned
@@ -500,34 +492,19 @@ void buffer::allocate_into(std::string ident, A allocation, B bytes_per_line)
 #if DEBUG_BUFFER == true
   { // MARK (buffer) MUTEX LOCK
     std::shared_lock lock(mtx_);
-    BUFFER << std::format("buffer::allocate(allocation[{}], "
-                          "bytes_per_line[{}], ident[{}]) called ⇣",
-                          allocation, bytes_per_line, ident)
+    BUFFER << std::format(
+                  "buffer::allocate(allocation[{}], bytes_per_line[{}], ident[{}]) called ⇣",
+                  allocation, bytes_per_line, ident)
            << '\n';
   }
 #endif
 
   { // MARK (buffer) MUTEX LOCK
     std::shared_lock lock(mtx_);
-
-    // Check if the buffer is already allocated
-    if (!nuts_buffer_.empty()) {
-
-#if DEBUG_BUFFER == true
-      BUFFER << "  but the buffer is already allocated. it will throw a "
-                "logic::error"
-             << '\n';
-#endif
-
-      throw std::logic_error("Buffer is already allocated.");
-    }
+    reset();
 
     nuts_buffer_unlined_ = nuts_buffer_unlined_t(bytes_per_line, nuts_byte_);
     nuts_buffer_ = nuts_buffer_t(allocation, std::move(nuts_buffer_unlined_));
-
-    // clear nuts_unlined_buffer_ and release unused memory.
-    nuts_buffer_unlined_.clear();
-    nuts_buffer_unlined_.shrink_to_fit();
 
     // Insert metadata into the registry
     BUFFER << "  nuts_buffer_ address " << addr_hex_() << " (nuts_buffer_) -> " << ident << '\n';
@@ -536,14 +513,8 @@ void buffer::allocate_into(std::string ident, A allocation, B bytes_per_line)
     registry_->insert(
         std::make_pair(ident, nuts_buffer_stored_t{std::move(nuts_buffer_), get_allocated_(),
                                                    std::move(metadata_)}));
-    unset_allocated_();
 
-    // reset metadata_
-    metadata_ = {};
-
-    // clear nuts_buffer_ and release unused memory.
-    nuts_buffer_.clear();
-    nuts_buffer_.shrink_to_fit();
+    reset(false);
 
     BUFFER << "  registry_ metadata address -> "
            << std::get<0>(registry_->at(ident).metadata.value()) << '\n';
