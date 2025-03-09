@@ -19,7 +19,7 @@ class buffer {
     // MARK: (buffer) buffer stream methods
     nuts_buffer_stream_t next(bool strip_null_byte = false);
     std::optional<nuts_byte_t> next(std::size_t search_at_line, std::size_t from_col_n,
-                                    nuts_byte_t until_it_finds);
+                                    const nuts_byte_t &until_it_finds);
     nuts_buffer_stream_t next(size_t line, bool strip_null_byte = false);
     std::size_t move_at_line(std::size_t line_n);
     std::size_t move_at_column(std::size_t col_n);
@@ -28,42 +28,59 @@ class buffer {
   private:
     friend class buffer;
     std::shared_mutex mtx_;
-    std::atomic<bool> active_;
-    std::atomic<std::size_t> line_;
-    std::atomic<std::size_t> column_;
-    std::atomic<nuts_byte_t> byte_;
+    std::atomic<std::size_t> line_{0};
+    std::atomic<std::size_t> column_{0};
+    nuts_byte_t byte_ = nuts_byte_t{0x00};
     buffer *buffer_;
+    // null
+    nuts_byte_t null_byte_{std::byte{0x00}};
+    // newline
+    nuts_byte_t newline_byte_{std::byte{0x0A}};
   };
   friend class stream_;
 
 public:
   buffer();
-
-  /**
-   * Constructs a buffer object, optionally initializing it with a registry.
-   * If the `has_registry` parameter is true, a new registry is created.
-   *
-   * @param has_registry Indicates whether the buffer should initialize with a
-   * registry. If set to true, a registry object will be allocated and
-   * configured.
-   * @return An instance of the buffer class initialized based on the provided
-   * flag.
-   */
   explicit buffer(bool has_registry);
-
-  // these are when reading from a file and optionally inserting into registry
-  // HINT: not implemented yet
-  buffer(const std::filesystem::path &file_path, std::optional<std::string &> ident);
-  // HINT: not implemented yet
-  buffer(const int &fd, const off_t &file_size, std::optional<std::string &> ident);
-
-  // create a single line buffer from a string or C-style string.
+  // create a single line buffer from a string.
   explicit buffer(const std::string &str);
-  explicit buffer(const char *c_str);
-  explicit buffer(char *c_str);
-  explicit buffer(nuts_buffer_unlined_t &bytes);
-  explicit buffer(nuts_buffer_t &data);
+  // create a buffer form file.
+  explicit buffer(const std::filesystem::path &file_path);
 
+  // MARK: (buffer) buffer from file and string
+  void read(const std::filesystem::path &file_path);
+  void string(const std::string &str);
+
+  // MARK: (buffer) buffer stream
+  stream_ stream();
+
+  nuts_buffer_t &get();
+  nuts_buffer_unlined_t &get(const size_t &line);
+  nuts_byte_t &get(const size_t &line, const size_t &col);
+
+  // GOOD: size methods
+  [[nodiscard]] nuts_buffer_size_t size() const;
+  [[nodiscard]] nuts_buffer_size_line_t size(std::size_t line, bool strip_null_byte = false) const;
+  [[nodiscard]] nuts_buffer_size_line_t size(std::size_t line, std::size_t col) const;
+  [[nodiscard]] nuts_buffer_sizes_t sizes(bool strip_null_byte = false) const;
+
+  // MARK: (buffer) metadata methods
+  nuts_buffer_metadata_t &get_metadata();
+  std::string get_metadata_buffer_address();
+  std::string get_metadata_file_path();
+  std::string get_metadata_registry_identifier();
+
+  std::string to_string() const;
+  std::string to_string(std::size_t line) const;
+  std::string to_string(std::size_t line, std::size_t col) const;
+
+  char ch(std::byte b);
+  nuts_byte_t byte(const std::string &str);
+  nuts_byte_t byte(char c);
+  std::string byte(const nuts_byte_t &byte);
+
+  void reset(bool registry = true);
+  // HINT: all the methods below are not implemented yet.
   /**
    * @brief Constructs a `buffer` object with specified allocation size and
    * bytes per line.
@@ -87,7 +104,6 @@ public:
   template <typename A = u8, typename B = u8>
   explicit buffer(A allocation = 1, B bytes_per_line = 1)
     requires ValidIntegerTypes<A> && ValidIntegerTypes<B>;
-
   /**
    * Allocates memory for the buffer based on the specified allocation size and
    * bytes per line. Performs validation to ensure the parameters meet
@@ -106,7 +122,6 @@ public:
   template <typename A = u8, typename B = u8>
   void allocate(A allocation = 1, B bytes_per_line = 1)
     requires ValidIntegerTypes<A> && ValidIntegerTypes<B>;
-
   /**
    * Allocates memory for a buffer and manages its metadata registry. This
    * method initializes the buffer and inserts the related metadata into the
@@ -128,118 +143,50 @@ public:
   template <typename A = u8, typename B = u8>
   void allocate_into(std::string ident, A allocation = 1, B bytes_per_line = 1)
     requires ValidIntegerTypes<A> && ValidIntegerTypes<B>;
-
-  // MARK: (buffer) buffer registry methods
-  // HINT: not implemented yet
   void registry();
-  // HINT: not implemented yet
   void registry(std::string &ident);
-
-  /**
-   * Reads the contents of a file specified by the given file path and processes
-   * its data into the buffer.
-   *
-   * @param file_path The path to the file to be read. It must point to a valid,
-   * accessible file on the filesystem.
-   *
-   * @throws std::invalid_argument If the file does not exist at the specified
-   * path.
-   * @throws std::runtime_error If the file cannot be opened for reading.
-   */
-  void read(const std::filesystem::path &file_path);
-  /**
-   * Reads the content of a file specified by the given file path and file
-   * descriptor, processes it in chunks, and populates the buffer with the read
-   * data. Metadata about the read operation is also recorded.
-   *
-   * @param file_path The file path of the file to be read. Used for metadata
-   * recording.
-   * @param fd The file descriptor associated with the file being read.
-   * @param file_size The total size of the file in bytes.
-   *
-   * @throws std::runtime_error If the `::read` [<fcntl.h>] function return
-   * `bytes_read<0`
-   */
-  void read(const std::filesystem::path &file_path, const int &fd, const off_t &file_size);
-
-  // HINT: not implemented yet
   void read_into(std::string ident, const std::filesystem::path &file_path);
-  // HINT: not implemented yet
   void read_into(std::string ident, const std::filesystem::path &file_path, const int &fd,
                  const off_t &file_size);
-
-  // HINT: not implemented yet
   void write(const std::filesystem::path &file_path);
-  // HINT: not implemented yet
   void write(const int &fd);
 
-  // MARK: (buffer) buffer stream
-
-  stream_ stream();
-
-  nuts_buffer_t &get();
-  nuts_buffer_unlined_t &get(const size_t &line);
-  nuts_byte_t &get(const size_t &line, const size_t &col);
-
-  // GOOD: size methods
-  [[nodiscard]] nuts_buffer_size_t size() const;
-  [[nodiscard]] nuts_buffer_size_line_t size(std::size_t line, bool strip_null_byte = false) const;
-  [[nodiscard]] nuts_buffer_sizes_t sizes(bool strip_null_byte = false) const;
-
-  // MARK: (buffer) metadata methods
-  nuts_buffer_metadata_t &get_metadata();
-  std::string get_metadata_buffer_address();
-  std::string get_metadata_file_path();
-  std::string get_metadata_registry_identifier();
-
-  std::string to_string() const;
-  std::string to_string(std::size_t line) const;
-  std::string to_string(std::size_t line, std::size_t col) const;
-
-  /**
-   * Converts the given character to a byte and assigns it to the internal buffer state.
-   *
-   * This function takes a single character, converts it into a byte, and updates the `nuts_byte_`
-   * property.
-   *
-   * @param c The character to be converted into a byte.
-   * @return The converted byte stored in `nuts_byte_`.
-   *
-   * @note The `nuts_byte_` property is initialized to `0x00` when a `buffer` instance is created.
-   * Calling this method updates `nuts_byte_` with the last converted character.
-   * To reset `nuts_byte_` back to `0x00`, use `byte('\0')` or `byte(0x00)`.
-   */
-  nuts_byte_t byte(char c);
-  /**
-   * Converts the given byte to a char and assigns it to the internal buffer state.
-   *
-   * This function takes a single byte, converts it into a char, and updates the `nuts_byte_`
-   * property.
-   *
-   * @param b The byte to be converted into a char.
-   * @return The converted char stored in `nuts_byte_`.
-   *
-   * @note The `nuts_byte_` property is initialized to `0x00` when a `buffer` instance is created.
-   * Calling this method updates `nuts_byte_` with the last converted character.
-   * To reset `nuts_byte_` back to `0x00`, use `byte('\0')` or `byte(0x00)`.
-   */
-  char byte(nuts_byte_t b);
-
-  void reset(bool registry=true);
-
-  // ONGOING: experimentation.
+  // ONGOING: experimentation. overload '<<' and '>>' operators, for insertion & deletion.
   // Overload << for insertion
   buffer &operator<<(const std::tuple<size_t, size_t, nuts_byte_t> &insertion);
-
   // Overload >> for deletion
   buffer &operator>>(const std::tuple<size_t, std::optional<size_t>> &deletion);
-  // utility function for the operator>> acting as a delete action.
-  static std::tuple<size_t, std::optional<size_t>>
-  delete_at(size_t line, std::optional<size_t> col = std::nullopt);
 
 private:
+  // MARK: (buffer) buffer process raw bytes
+  void process_bytes_(const std::string &str);
+  static std::size_t char_length_(const unsigned char &byte);
+  static bool continuation_byte_(const std::string &str, std::size_t offset,
+                                 std::size_t char_length);
+  void from_string_(const std::string &str);
+  void from_file_(const std::filesystem::path &file_path);
+
   // MARK: (buffer) mutex methods and fields
   std::shared_mutex mtx_;
+
+  nuts_buffer_t nuts_buffer_;
+  nuts_buffer_unlined_t nuts_buffer_unlined_;
+  nuts_byte_t nuts_byte_;
+  std::byte nutsbyte_{0x00};
+
+  // predefined nuts_byte_t
+  // null
+  nuts_byte_t null_byte_{std::byte{0x00}};
+  // newline
+  nuts_byte_t newline_byte_{std::byte{0x0A}};
+  // carriage return
+  nuts_byte_t carriage_return_byte_{std::byte{0x0D}};
+  // tab
+  nuts_byte_t tab_byte_{std::byte{0x09}};
+  // space
+  nuts_byte_t space_byte_{std::byte{0x20}};
+  // malformed
+  nuts_byte_t malformed_byte_{std::byte{0xEF}, std::byte{0xBF}, std::byte{0xBD}};
 
   /**
    * Generates the hexadecimal address of the internal nuts_buffer_ memory
@@ -250,9 +197,6 @@ private:
    * hexadecimal format.
    */
   std::string addr_hex_();
-  nuts_buffer_t nuts_buffer_;
-  nuts_buffer_unlined_t nuts_buffer_unlined_;
-  nuts_byte_t nuts_byte_{0x00};
 
   /**
    * Retrieves the current allocation status of the buffer.
@@ -309,7 +253,7 @@ private:
   bool get_from_string_() const;
   void set_from_string_();
   void unset_from_string_();
-  std::atomic<bool> from_string_{false};
+  std::atomic<bool> string_{false};
 
   /**
    * Retrieves the current state of the read flag.
@@ -363,162 +307,5 @@ private:
   std::unique_ptr<nbuffer::internal_debug> internal_debug_{nullptr};
 #endif
 };
-
-// MARK: (buffer) templates definition
-
-template <typename A, typename B>
-buffer::buffer(A allocation, B bytes_per_line)
-  requires ValidIntegerTypes<A> && ValidIntegerTypes<B>
-{
-
-#if DEBUG_BUFFER == true
-  set_internal_debug_();
-#endif
-
-  // Ensure both types are unsigned
-  static_assert(std::is_unsigned_v<A>, "A must be an unsigned type");
-  static_assert(std::is_unsigned_v<B>, "B must be an unsigned type");
-
-  // Check allocation size validity
-  constexpr A a_max_value = std::numeric_limits<A>::max();
-  if (allocation > a_max_value) {
-    throw std::invalid_argument("Allocation size exceeds the maximum value of A");
-  }
-
-  // Check bytes per line validity
-  constexpr B b_max_value = std::numeric_limits<B>::max();
-  if (bytes_per_line > b_max_value) {
-    throw std::invalid_argument("Bytes per line size exceeds the maximum value of B");
-  }
-
-#if DEBUG_BUFFER == true
-  { // MARK (buffer) MUTEX LOCK
-    std::shared_lock lock(mtx_);
-    BUFFER << std::format("buffer::buffer(allocation[{}], bytes_per_line[{}]) called ⇣", allocation,
-                          bytes_per_line)
-           << '\n';
-  }
-#endif
-
-  nuts_buffer_unlined_ = nuts_buffer_unlined_t(bytes_per_line, nuts_byte_);
-  nuts_buffer_ = nuts_buffer_t(allocation, nuts_buffer_unlined_);
-  insert_metadata_(addr_hex_(), std::nullopt, std::nullopt);
-}
-
-template <typename A, typename B>
-void buffer::allocate(A allocation, B bytes_per_line)
-  requires ValidIntegerTypes<A> && ValidIntegerTypes<B>
-{
-
-  if (get_has_registry_()) {
-    throw std::invalid_argument("this buffer has a registry. use buffer::allocate_into() instead");
-  }
-
-  // Ensure both types are unsigned
-  static_assert(std::is_unsigned_v<A>, "A must be an unsigned type");
-  static_assert(std::is_unsigned_v<B>, "B must be an unsigned type");
-
-  // Check allocation size validity
-  constexpr A a_max_value = std::numeric_limits<A>::max();
-  if (allocation > a_max_value) {
-    throw std::invalid_argument("Allocation size exceeds the maximum value of A");
-  }
-
-  // Check bytes per line validity
-  constexpr B b_max_value = std::numeric_limits<B>::max();
-  if (bytes_per_line > b_max_value) {
-    throw std::invalid_argument("Bytes per line size exceeds the maximum value of B");
-  }
-
-#if DEBUG_BUFFER == true
-  { // MARK (buffer) MUTEX LOCK
-    std::shared_lock lock(mtx_);
-
-    BUFFER << std::format("buffer::allocate(allocation[{}], "
-                          "bytes_per_line[{}]) called ⇣",
-                          allocation, bytes_per_line)
-           << '\n';
-  }
-#endif
-
-  // Check if the buffer is already allocated
-  if (!nuts_buffer_.empty()) {
-#if DEBUG_BUFFER == true
-    BUFFER << "  but the buffer is already allocated. it will throw a "
-              "logic::error"
-           << '\n';
-#endif
-
-    throw std::logic_error("Buffer is already allocated.");
-  }
-
-  nuts_buffer_unlined_ = nuts_buffer_unlined_t(bytes_per_line, nuts_byte_);
-  nuts_buffer_ = nuts_buffer_t(allocation, nuts_buffer_unlined_);
-  insert_metadata_(addr_hex_(), std::nullopt, std::nullopt);
-  set_allocated_();
-}
-
-template <typename A, typename B>
-void buffer::allocate_into(std::string ident, A allocation, B bytes_per_line)
-  requires ValidIntegerTypes<A> && ValidIntegerTypes<B>
-{
-
-  if (!get_has_registry_()) {
-    throw std::invalid_argument(
-        "registry_ is false. use buffer::buffer( true ) to initialize the registry");
-  }
-
-  if (registry_ == nullptr) {
-    throw std::invalid_argument(
-        "registry_ is nullptr. use buffer::buffer( true ) to initialize the registry");
-  }
-
-  // Ensure both types are unsigned
-  static_assert(std::is_unsigned_v<A>, "A must be an unsigned type");
-  static_assert(std::is_unsigned_v<B>, "B must be an unsigned type");
-
-  // Check allocation size validity
-  constexpr A a_max_value = std::numeric_limits<A>::max();
-  if (allocation > a_max_value) {
-    throw std::invalid_argument("Allocation size exceeds the maximum value of A");
-  }
-
-  // Check bytes per line validity
-  constexpr B b_max_value = std::numeric_limits<B>::max();
-  if (bytes_per_line > b_max_value) {
-    throw std::invalid_argument("Bytes per line size exceeds the maximum value of B");
-  }
-
-#if DEBUG_BUFFER == true
-  { // MARK (buffer) MUTEX LOCK
-    std::shared_lock lock(mtx_);
-    BUFFER << std::format(
-                  "buffer::allocate(allocation[{}], bytes_per_line[{}], ident[{}]) called ⇣",
-                  allocation, bytes_per_line, ident)
-           << '\n';
-  }
-#endif
-
-  { // MARK (buffer) MUTEX LOCK
-    std::shared_lock lock(mtx_);
-    reset();
-
-    nuts_buffer_unlined_ = nuts_buffer_unlined_t(bytes_per_line, nuts_byte_);
-    nuts_buffer_ = nuts_buffer_t(allocation, std::move(nuts_buffer_unlined_));
-
-    // Insert metadata into the registry
-    BUFFER << "  nuts_buffer_ address " << addr_hex_() << " (nuts_buffer_) -> " << ident << '\n';
-    insert_metadata_(addr_hex_(), std::nullopt, ident);
-    set_allocated_();
-    registry_->insert(
-        std::make_pair(ident, nuts_buffer_stored_t{std::move(nuts_buffer_), get_allocated_(),
-                                                   std::move(metadata_)}));
-
-    reset(false);
-
-    BUFFER << "  registry_ metadata address -> "
-           << std::get<0>(registry_->at(ident).metadata.value()) << '\n';
-  }
-}
 
 } // namespace nutsloop
