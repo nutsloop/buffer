@@ -22,10 +22,10 @@ using u64 = uint64_t;
 
 // MARK: (buffer) buffer types
 // HINT: buffer
-//       a byte is a single byte
-//       a line is a vector of byte
-//       a file is a vector of vector of byte
-using nuts_byte_t = std::byte;
+//       a byte is a vector of byte
+//       a line is a vector of vector of byte
+//       a file is a vector of vector of vector of byte
+using nuts_byte_t = std::vector<std::byte>;
 using nuts_buffer_unlined_t = std::vector<nuts_byte_t>;
 using nuts_buffer_t = std::vector<nuts_buffer_unlined_t>;
 
@@ -56,11 +56,11 @@ struct nuts_buffer_stored_t {
 using nuts_buffer_registry_t = std::unordered_map<std::string, nuts_buffer_stored_t>;
 
 // HINT: view on buffer (not implemented yet)
-using nuts_buffer_view_unlined_t = std::span<nuts_byte_t>;
+using nuts_buffer_view_unlined_t = std::span<std::byte>;
 using nuts_buffer_view_t = std::span<nuts_buffer_view_unlined_t>;
 
 // HINT: read-only buffer (not implemented yet)
-template <std::size_t S> using nuts_buffer_ro_unlined_t = std::array<nuts_byte_t, S>;
+template <std::size_t S> using nuts_buffer_ro_unlined_t = std::array<std::byte, S>;
 template <std::size_t S, std::size_t I>
 using nuts_buffer_ro_t = std::array<nuts_buffer_ro_unlined_t<I>, S>;
 
