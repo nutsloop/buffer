@@ -22,19 +22,15 @@ namespace nutsloop {
  */
 nuts_buffer_stream_t buffer::stream_::next(const bool strip_null_byte) {
 
-  if (!active_.load()) {
-    active_.store(true);
-  }
-
   {
-    // MARK: (buffer) MUTEX_LOCK
+    // MARK: (buffer) SHARED_LOCK
     std::shared_lock lock(mtx_);
     // If we've reached the end of the buffer, return nullopt to end the stream.
     if (line_.load() >= buffer_->size()) {
 
       line_.store(0);          // Reset line index
       column_.store(0);        // Reset column index
-      byte_.store(buffer_->byte(0x00)); // Reset byte
+      byte_ = null_byte_; // Reset byte
 
       return std::nullopt; // End of stream
     }
@@ -46,14 +42,14 @@ nuts_buffer_stream_t buffer::stream_::next(const bool strip_null_byte) {
 
         line_.store(0);          // Reset line index
         column_.store(0);        // Reset column index
-        byte_.store(buffer_->byte(0x00)); // Reset byte
+        byte_ =null_byte_; // Reset byte
 
         return std::nullopt;
       }
 
       return nuts_buffer_stream_t({
           {line_.fetch_add(1), column_.exchange(0)},
-        buffer_->byte(0x0A) // Return newline
+        newline_byte_ // Return newline
       });
     }
 
@@ -69,11 +65,7 @@ nuts_buffer_stream_t buffer::stream_::next(const bool strip_null_byte) {
 // it returns all the bytes until it finds the given byte.
 std::optional<nuts_byte_t> buffer::stream_::next(const std::size_t search_at_line,
                                           const std::size_t from_col_n,
-                                          const nuts_byte_t until_it_finds) {
-
-  if (!active_.load()) {
-    active_.store(true);
-  }
+                                          const nuts_byte_t& until_it_finds) {
 
   {
     // MARK: (buffer) MUTEX_LOCK
@@ -82,12 +74,12 @@ std::optional<nuts_byte_t> buffer::stream_::next(const std::size_t search_at_lin
     // select the line to search
     line_.store(search_at_line);    // set the line index
     column_.store(from_col_n);      // set the column index
-    byte_.store(nuts_byte_t{0x00}); // Reset byte
+    byte_ = null_byte_; // Reset byte
 
     if (buffer_->get(search_at_line, from_col_n) != until_it_finds) {
       column_.fetch_add(1);                         // Move to the next byte
-      byte_.store(buffer_->get(search_at_line, from_col_n)); // Return next byte
-      return byte_.load();
+      byte_ = {buffer_->get(search_at_line, from_col_n)}; // Return next byte
+      return byte_;
     }
 
     return std::nullopt;
@@ -97,10 +89,6 @@ std::optional<nuts_byte_t> buffer::stream_::next(const std::size_t search_at_lin
 // TODO: must be adapted to modifiers
 // TODO: handle exceptions
 nuts_buffer_stream_t buffer::stream_::next(const size_t line, const bool strip_null_byte) {
-
-  if (!active_.load()) {
-    active_.store(true);
-  }
 
   {
     // MARK: (buffer) MUTEX_LOCK
@@ -117,7 +105,7 @@ nuts_buffer_stream_t buffer::stream_::next(const size_t line, const bool strip_n
     if (column_.load() == buffer_->size(line_.load()) - (strip_null_byte ? 1 : 0)) {
       column_.store(0);        // Reset column index
       line_.store(0);          // Reset line index
-      byte_.store(buffer_->byte(0x00)); // Reset byte
+      byte_ = null_byte_; // Reset byte
       return std::nullopt;            // Signal end of the line
     }
 
@@ -130,12 +118,7 @@ nuts_buffer_stream_t buffer::stream_::next(const size_t line, const bool strip_n
 // TODO: handle exceeding sizes
 std::size_t buffer::stream_::move_at_line(const std::size_t line_n) {
 
-  if (!active_.load()) {
-    // TODO: explain things
-    throw std::runtime_error("buffer::stream_::move_at_line(): stream is not active");
-  }
-
-  { // MARK: (buffer) MUTEX_LOCK
+  { // MARK: (buffer) SHARED_LOCK
     std::shared_lock lock(mtx_);
     column_.store(0);
     if (line_n > buffer_->size()) {
@@ -148,12 +131,7 @@ std::size_t buffer::stream_::move_at_line(const std::size_t line_n) {
 // TODO: handle exceeding sizes
 std::size_t buffer::stream_::move_at_column(const std::size_t col_n) {
 
-  if (!active_.load()) {
-    // TODO: explain things
-    throw std::runtime_error("buffer::stream_::move_at_column(): stream is not active");
-  }
-
-  { // MARK: (buffer) MUTEX_LOCK
+  { // MARK: (buffer) SHARED_LOCK
     std::shared_lock lock(mtx_);
     if (col_n > buffer_->size(line_.load())) {
       throw std::runtime_error("buffer::stream_::move_at_column(): column index exceeds buffer size");
@@ -165,13 +143,8 @@ std::size_t buffer::stream_::move_at_column(const std::size_t col_n) {
 
 std::size_t buffer::stream_::ends() {
 
-  if (!active_.load()) {
-    // TODO: explain things
-    throw std::runtime_error("buffer::stream_::ends(): stream is not active");
-  }
-
   {
-    // MARK: (buffer) MUTEX_LOCK
+    // MARK: (buffer) SHARED_LOCK
     std::shared_lock lock(mtx_);
     return line_.exchange(buffer_->size());
   }
