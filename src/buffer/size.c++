@@ -56,6 +56,53 @@ nuts_buffer_size_line_t buffer::size(const std::size_t line, const bool strip_nu
   return size;
 }
 
+nuts_buffer_size_line_t buffer::size(std::size_t line, std::size_t col) const {
+
+  if (line >= nuts_buffer_.size()) {
+    std::size_t size = nuts_buffer_.size();
+
+#if DEBUG_BUFFER == true
+    BUFFER_ERROR << '\n'
+                 << ansi("  buffer::size(line[{}], col[{}]) called ⇣", line, col).red().bold()
+                 << '\n'
+                 << ansi("    nuts_buffer_ size -> [{}]", size).green() << '\n'
+                 << ansi("    line -> [{}]", line).red() << '\n'
+                 << ansi("    col -> [{}]", col).red() << '\n'
+                 << "    throw std::out_of_range"_.bold() << '\n';
+#endif
+
+    throw std::out_of_range(std::format("line {} is out of range", line));
+  }
+
+  if (col >= nuts_buffer_[line].size()) {
+    std::size_t size = nuts_buffer_[line].size();
+
+#if DEBUG_BUFFER == true
+    BUFFER_ERROR << '\n'
+                 << ansi("  buffer::size(line[{}], col[{}]) called ⇣", line, col).red().bold()
+                 << '\n'
+                 << ansi("    nuts_buffer_unlined_ size -> [{}]", size).green() << '\n'
+                 << ansi("    line -> [{}]", line).red() << '\n'
+                 << ansi("    col -> [{}]", col).red() << '\n'
+                 << "    throw std::out_of_range"_.bold() << '\n';
+#endif
+
+    throw std::out_of_range(std::format("column {} is out of range", line));
+  }
+
+  std::size_t size = nuts_buffer_[line][col].size();
+#if DEBUG_BUFFER == true
+  BUFFER << '\n'
+         << ansi("  buffer::size(line[{}], col[{}]) called ⇣", line, col).green().bold() << '\n'
+         << ansi("    nuts_byte_ size -> [{}]", size).yellow() << '\n';
+#endif
+  return size;
+}
+
+/*
+ * TODO: update the method adding a third element to the array, of the vector, that get the size of
+ *       each nuts_bite_ of the line.
+ */
 nuts_buffer_sizes_t buffer::sizes(const bool strip_null_byte) const {
 
   const std::size_t size = nuts_buffer_.size();
