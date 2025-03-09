@@ -43,8 +43,8 @@ int main() {
 
   stream_log->ostream() << "buffer stream test"_.background_blue().bold() << std::endl;
 
-  const auto path = std::getenv("JSX_FILE_BUFFER");
-  if (path == nullptr) {
+  std::filesystem::path path = std::getenv("JSX_FILE_BUFFER");
+  if (path.empty()) {
     std::cerr << "JSX_FILE_BUFFER environment variable not set" << std::endl;
     exit(1);
   }
@@ -80,8 +80,8 @@ int main() {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }*/
 
-  buffer buf_stream;
-  buf_stream.read(path);
+  buffer buf_stream(path);
+
   stream_log->ostream()
       << "iterating the nuts_buffer_stream_t returned from buffer::stream::next()"_.bold() << '\n'
       << "alias for type"_.green().underline()
@@ -103,8 +103,9 @@ int main() {
     stream_log->ostream() << ansi("  line@({})", y).yellow().bold()
                           << ansi("  column@({})", x).magenta().bold()
                           << ansi("  byte->({})",
-                                  (byte == buf_stream.byte('\n')
+                                  (byte == buf_stream.byte("\n")
                                        ? "\\n"_.green().to_string()
+                                       // FIXME: it does not handle multibyte characters.
                                        : ansi(buf_stream.to_string(y,x)).green().to_string()))
                                  .bold()
                           << '\n';
@@ -144,178 +145,178 @@ int main() {
     }
 
     // let's print everything that is alphanumeric
-    if (std::isalnum(static_cast<char>(byte))) {
+    if (std::isalnum(static_cast<unsigned char>(*byte.data()))) {
       stream_log->ostream() << ansi(buf_stream.to_string(y,x)).green().to_string();
     }
 
     // let's play with the dot operator
-    if (byte == buf_stream.byte('.')) {
+    if (byte == buf_stream.byte(".")) {
       stream_log->ostream() << "DOT"_.magenta();
       continue;
     }
 
     // let's play with the parenthesis
-    if (byte == buf_stream.byte('(')) {
+    if (byte == buf_stream.byte("(")) {
       stream_log->ostream() << "LPAREN"_.magenta();
       continue;
     }
-    if (byte == buf_stream.byte(')')) {
+    if (byte == buf_stream.byte(")")) {
       stream_log->ostream() << "RPAREN"_.magenta();
       continue;
     }
 
     // let's play with brackets
-    if (byte == buf_stream.byte('[')) {
+    if (byte == buf_stream.byte("[")) {
       stream_log->ostream() << "LBRACKET"_.magenta();
       continue;
     }
-    if (byte == buf_stream.byte(']')) {
+    if (byte == buf_stream.byte("]")) {
       stream_log->ostream() << "RBRACKET"_.magenta();
       continue;
     }
 
     // let's play with curly braces
-    if (byte == buf_stream.byte('{')) {
+    if (byte == buf_stream.byte("{")) {
       stream_log->ostream() << "LBRACE"_.magenta();
       continue;
     }
-    if (byte == buf_stream.byte('}')) {
+    if (byte == buf_stream.byte("}")) {
       stream_log->ostream() << "RBRACE"_.magenta();
       continue;
     }
 
     // let's play with the comma operator
-    if (byte == buf_stream.byte(',')) {
+    if (byte == buf_stream.byte(",")) {
       stream_log->ostream() << "COMMA"_.magenta().bold();
       continue;
     }
 
     // let's play with the colon operator
-    if (byte == buf_stream.byte(':')) {
+    if (byte == buf_stream.byte(":")) {
       stream_log->ostream() << "COLON"_.magenta();
       continue;
     }
 
     // let's play with the semicolon operator
-    if (byte == buf_stream.byte(';')) {
+    if (byte == buf_stream.byte(";")) {
       stream_log->ostream() << "SEMICOLON"_.magenta().bold();
       continue;
     }
 
     // let's play with the plus operator
-    if (byte == buf_stream.byte('+')) {
+    if (byte == buf_stream.byte("+")) {
       stream_log->ostream() << "PLUS"_.magenta();
       continue;
     }
 
     // let's play with the minus operator
-    if (byte == buf_stream.byte('-')) {
+    if (byte == buf_stream.byte("-")) {
       stream_log->ostream() << "MINUS"_.magenta();
       continue;
     }
 
     // let's play with the asterisk operator
-    if (byte == buf_stream.byte('*')) {
+    if (byte == buf_stream.byte("*")) {
       stream_log->ostream() << "ASTERISK"_.magenta();
       continue;
     }
 
     // let's play with the slash operator
-    if (byte == buf_stream.byte('/')) {
+    if (byte == buf_stream.byte("/")) {
       stream_log->ostream() << "SLASH"_.magenta();
       continue;
     }
 
     // let's play with the percent operator
-    if (byte == buf_stream.byte('%')) {
+    if (byte == buf_stream.byte("%")) {
       stream_log->ostream() << "PERCENT"_.magenta();
       continue;
     }
 
     // let's play with the ampersand operator
-    if (byte == buf_stream.byte('&')) {
+    if (byte == buf_stream.byte("&")) {
       stream_log->ostream() << "AMPERSAND"_.magenta();
       continue;
     }
 
     // let's play with the pipe operator
-    if (byte == buf_stream.byte('|')) {
+    if (byte == buf_stream.byte("|")) {
       stream_log->ostream() << "PIPE"_.magenta();
       continue;
     }
 
     // let's play with the caret operator
-    if (byte == buf_stream.byte('^')) {
+    if (byte == buf_stream.byte("^")) {
       stream_log->ostream() << "CARET"_.magenta();
       continue;
     }
 
     // let's play with the tilde operator
-    if (byte == buf_stream.byte('~')) {
+    if (byte == buf_stream.byte("~")) {
       stream_log->ostream() << "TILDE"_.magenta();
       continue;
     }
 
     // let's play with the exclamation operator
-    if (byte == buf_stream.byte('!')) {
+    if (byte == buf_stream.byte("!")) {
       stream_log->ostream() << "EXCLAMATION"_.magenta();
       continue;
     }
 
     // let's play with the question operator
-    if (byte == buf_stream.byte('?')) {
+    if (byte == buf_stream.byte("?")) {
       stream_log->ostream() << "QUESTION"_.magenta();
       continue;
     }
 
     // let's play with the at operator
-    if (byte == buf_stream.byte('@')) {
+    if (byte == buf_stream.byte("@")) {
       stream_log->ostream() << "AT"_.magenta();
       continue;
     }
 
     // let's play with the hash operator
-    if (byte == buf_stream.byte('#')) {
+    if (byte == buf_stream.byte("#")) {
       stream_log->ostream() << "HASH"_.magenta();
       continue;
     }
 
     // let's play with the dollar operator
-    if (byte == buf_stream.byte('$')) {
+    if (byte == buf_stream.byte("$")) {
 
       stream_log->ostream() << "DOLLAR"_.magenta();
       continue;
     }
 
     // let's play with low-dash operator
-    if (byte == buf_stream.byte('_')) {
+    if (byte == buf_stream.byte("_")) {
       stream_log->ostream() << "_"_.magenta();
       continue;
     }
 
     // let's play with string single quotes
-    if (byte == buf_stream.byte('\'')) {
+    if (byte == buf_stream.byte("\'")) {
 
       stream_log->ostream() << "S_QUOTE"_.yellow();
       x = x + 1;
 
       while (auto str = tokenizer.next(y, x++, byte)) {
         tokenizer.move_at_column(x);
-        stream_log->ostream() << static_cast<char>(*str);
+        stream_log->ostream() << buf_stream.byte(*str);
       }
       stream_log->ostream() << "S_QUOTE"_.yellow();
       tokenizer.move_at_column(x);
       continue;
     }
     // let's play with string double quotes
-    if (byte == buf_stream.byte('"')) {
+    if (byte == buf_stream.byte("\"")) {
 
       stream_log->ostream() << "D_QUOTE"_.blue();
       x = x + 1;
 
       while (auto str = tokenizer.next(y, x++, byte)) {
         tokenizer.move_at_column(x);
-        stream_log->ostream() << static_cast<char>(*str);
+        stream_log->ostream() << buf_stream.byte(*str);
       }
       stream_log->ostream() << "D_QUOTE"_.blue();
       tokenizer.move_at_column(x);
@@ -323,12 +324,12 @@ int main() {
     }
 
     // let's play with the equal sign operator
-    if (byte == buf_stream.byte('=')) {
+    if (byte == buf_stream.byte("=")) {
       tokenizer.move_at_column(x + 1);
 
-      if (buf_stream.get(y, x + 1) == buf_stream.byte('=')) {
+      if (buf_stream.get(y, x + 1) == buf_stream.byte("=")) {
 
-        if (buf_stream.get(y, x + 2) == buf_stream.byte('=')) {
+        if (buf_stream.get(y, x + 2) == buf_stream.byte("=")) {
           stream_log->ostream() << "STRICT_EQUAL"_.black().background_cyan();
           tokenizer.move_at_column(x + 3);
           continue;
@@ -338,7 +339,7 @@ int main() {
         continue;
       }
       // it may be an arrow function on the equal game.
-      if (buf_stream.get(y, x + 1) == buf_stream.byte('>')) {
+      if (buf_stream.get(y, x + 1) == buf_stream.byte(">")) {
         stream_log->ostream() << "ARROW"_.black().background_magenta();
         tokenizer.move_at_column(x + 2);
         continue;
