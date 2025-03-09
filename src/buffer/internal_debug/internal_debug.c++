@@ -2,7 +2,6 @@
 
 #include "log.h++"
 
-std::atomic<bool> temporary_flag_destructor_{false};
 namespace nutsloop::nbuffer {
 
 #if DEBUG_BUFFER == true
