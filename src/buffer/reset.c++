@@ -15,7 +15,7 @@ void buffer::reset(const bool registry/*=true*/) {
   nuts_buffer_unlined_.shrink_to_fit();
   nuts_buffer_.clear();
   nuts_buffer_.shrink_to_fit();
-  nuts_byte_ = byte(0x00);
+  nutsbyte_ = std::byte{0x00};
   reset_metadata_();
   unset_from_string_();
   unset_read_();
