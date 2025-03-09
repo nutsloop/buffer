@@ -45,9 +45,5 @@ buffer& buffer::operator>>( const std::tuple<size_t, std::optional<size_t>>& del
 
   return *this;
 }
-// utility function for the operator>> acting as a delete action.
-std::tuple<size_t, std::optional<size_t>> buffer::delete_at( size_t line, const std::optional<size_t> col ) {
-  return { line, col };
-}
 
 }
