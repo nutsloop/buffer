@@ -13,8 +13,8 @@ int main() {
   nutsloop::log::activate();
   const auto size_log = nutsloop::log::get_instance("size");
 
-  const auto path = std::getenv( "JSX_FILE_BUFFER" );
-  if ( path == nullptr ) {
+  const std::filesystem::path path = std::getenv( "JSX_FILE_BUFFER" );
+  if ( path.empty() ) {
     std::cerr << "JSX_FILE_BUFFER environment variable not set" << std::endl;
     exit( 1 );
   }
