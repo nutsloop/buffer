@@ -2,8 +2,8 @@
 
 namespace nutsloop {
 
-std::string buffer::addr_hex_() {
-  return std::format( "0x{:x}", reinterpret_cast<uintptr_t>( nuts_buffer_.data() ) );
+uintptr_t buffer::addr_hex_() {
+  return reinterpret_cast<uintptr_t>( nuts_buffer_.data());
 }
 
 }
