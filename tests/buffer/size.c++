@@ -40,10 +40,10 @@ int main() {
 
   // check the sizes of the buffer
   size_log->ostream() << "retrieve buffer sizes => "_.bold()
-                      << std::format("buf.sizes() = {}", buf.sizes()) << std::endl;
+                      << std::format("buf.sizes() = {}", buf.sizes().size) << std::endl;
 
   size_log->ostream() << "retrieve buffer sizes stripping null byte off => "_.bold()
-                    << std::format("buf.sizes() = {}", buf.sizes(true)) << std::endl;
+                    << std::format("buf.sizes() = {}", buf.sizes(true).size) << std::endl;
 
   // check the size exceeding the buffer size
   try {
