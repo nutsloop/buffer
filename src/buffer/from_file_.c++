@@ -31,7 +31,7 @@ void buffer::from_file_(const std::filesystem::path &file_path) {
     }
 
     file.close();
-    insert_metadata_(addr_hex_(), file_path, std::nullopt);
+    metadata_ = nuts_buffer_metadata_t(addr_hex_(), file_path, std::nullopt);
     set_allocated_();
     set_read_();
   }
