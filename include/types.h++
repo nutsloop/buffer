@@ -9,16 +9,10 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace nutsloop::nbuffer::types {
-
-// MARK: (buffer) integer types
-// HINT: shorts for integer types
-using u8 = uint8_t;
-using u16 = uint16_t;
-using u32 = uint32_t;
-using u64 = uint64_t;
 
 // MARK: (buffer) buffer types
 // HINT: buffer
@@ -33,19 +27,41 @@ using nuts_buffer_t = std::vector<nuts_buffer_unlined_t>;
 // HINT: std::get<0> -> std::string => memory address
 // HINT: std::get<1> -> std::optional<std::string> => created from file (filename)
 // HINT: std::get<2> -> std::optional<std::string> => part of library (identifier)
-using nuts_buffer_mem_addr_t = std::string;
-using nuts_buffer_from_file_t = std::optional<std::filesystem::path>;
-using nuts_buffer_registry_identifier_t = std::optional<std::string>;
-using nuts_buffer_metadata_t =
-    std::tuple<nuts_buffer_mem_addr_t, nuts_buffer_from_file_t, nuts_buffer_registry_identifier_t>;
+struct nuts_buffer_metadata_t {
+  uintptr_t memory_address{};
+  std::optional<std::filesystem::path> path_to_file;
+  std::optional<std::string> registry_identifier;
+  nuts_buffer_metadata_t() = default;
+  nuts_buffer_metadata_t(const uintptr_t memory_address,
+                         const std::optional<std::string> &path_to_file,
+                         std::optional<std::string> registry_identifier)
+      : memory_address(memory_address),
+        path_to_file(path_to_file),
+        registry_identifier(std::move(registry_identifier)) {}
+  [[nodiscard]] uintptr_t get_memory_address() const { return memory_address; }
+  [[nodiscard]] std::optional<std::string> get_path_to_file() const { return path_to_file; }
+  [[nodiscard]] std::optional<std::string> get_registry_identifier() const {
+    return registry_identifier;
+  }
+};
 
 // MARK: (buffer) buffer stream
 using nuts_buffer_stream_t = std::optional<std::tuple<std::array<std::size_t, 2>, nuts_byte_t>>;
 
 // MARK: (buffer) size types
-using nuts_buffer_size_t = std::size_t;
-using nuts_buffer_size_line_t = std::size_t;
-using nuts_buffer_sizes_t = std::vector<std::array<std::size_t, 2>>;
+struct nuts_buffer_col_t {
+  std::size_t col_offset;
+  std::size_t size;
+};
+struct nuts_buffer_line_t {
+  std::size_t line_offset;
+  std::size_t size;
+  std::vector<nuts_buffer_col_t> cols;
+};
+struct nuts_buffer_size_t {
+  std::size_t size;
+  std::vector<nuts_buffer_line_t> lines;
+};
 
 // HINT: a container of buffers (not implemented yet)
 struct nuts_buffer_stored_t {
@@ -63,27 +79,5 @@ using nuts_buffer_view_t = std::span<nuts_buffer_view_unlined_t>;
 template <std::size_t S> using nuts_buffer_ro_unlined_t = std::array<std::byte, S>;
 template <std::size_t S, std::size_t I>
 using nuts_buffer_ro_t = std::array<nuts_buffer_ro_unlined_t<I>, S>;
-
-// MARK: (buffer) buffer concepts
-
-/**
- * @brief Concept for validating integer types.
- *
- * The `ValidIntegerTypes_C` concept ensures that the type `T`
- * is one of the following allowed integer types:
- * - `u8`  (8-bit unsigned integer)
- * - `u16` (16-bit unsigned integer)
- * - `u32` (32-bit unsigned integer)
- * - `u64` (64-bit unsigned integer)
- * - `size_t` (unsigned integer type representing size)
- *
- * This concept is used to restrict templates to work only with
- * the specified integer types for safer and more predictable behavior.
- *
- * @tparam T The type to be validated.
- */
-template <typename T>
-concept ValidIntegerTypes = std::same_as<T, u8> || std::same_as<T, u16> || std::same_as<T, u32> ||
-                            std::same_as<T, u64> || std::same_as<T, size_t>;
 
 } // namespace nutsloop::nbuffer::types
