@@ -17,7 +17,7 @@ void buffer::from_string_(const std::string &str) {
     nuts_byte_.clear();
     nuts_byte_.shrink_to_fit();
 
-    insert_metadata_(addr_hex_(), std::nullopt, std::nullopt);
+    metadata_ = nuts_buffer_metadata_t(addr_hex_(), std::nullopt, std::nullopt);
     set_allocated_();
     set_from_string_();
   }
