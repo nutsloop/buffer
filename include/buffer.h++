@@ -41,7 +41,6 @@ class buffer {
 
 public:
   buffer();
-  explicit buffer(bool has_registry);
   // create a single line buffer from a string.
   explicit buffer(const std::string &str);
   // create a buffer form file.
@@ -51,6 +50,8 @@ public:
   void read(const std::filesystem::path &file_path);
   void string(const std::string &str);
 
+  void write(const std::optional<std::filesystem::path> &file_path);
+
   // MARK: (buffer) buffer stream
   stream_ stream();
 
@@ -59,16 +60,13 @@ public:
   nuts_byte_t &get(const size_t &line, const size_t &col);
 
   // GOOD: size methods
-  [[nodiscard]] nuts_buffer_size_t size() const;
-  [[nodiscard]] nuts_buffer_size_line_t size(std::size_t line, bool strip_null_byte = false) const;
-  [[nodiscard]] nuts_buffer_size_line_t size(std::size_t line, std::size_t col) const;
-  [[nodiscard]] nuts_buffer_sizes_t sizes(bool strip_null_byte = false) const;
+  [[nodiscard]] std::size_t size() const;
+  [[nodiscard]] std::size_t size(std::size_t line, bool strip_null_byte = false) const;
+  [[nodiscard]] std::size_t size(std::size_t line, std::size_t col) const;
+  [[nodiscard]] nuts_buffer_size_t sizes(bool strip_null_byte = false) const;
 
   // MARK: (buffer) metadata methods
-  nuts_buffer_metadata_t &get_metadata();
-  std::string get_metadata_buffer_address();
-  std::string get_metadata_file_path();
-  std::string get_metadata_registry_identifier();
+  nuts_buffer_metadata_t metadata() const;
 
   std::string to_string() const;
   std::string to_string(std::size_t line) const;
@@ -81,75 +79,15 @@ public:
 
   void reset(bool registry = true);
   // HINT: all the methods below are not implemented yet.
-  /**
-   * @brief Constructs a `buffer` object with specified allocation size and
-   * bytes per line.
-   *
-   * @tparam A Type of the allocation size parameter. Must satisfy the
-   * `ValidIntegerTypes_C` concept.
-   * @tparam B Type of the bytes per line parameter. Must satisfy the
-   * `ValidIntegerTypes_C` concept.
-   *
-   * @param allocation An optional parameter specifying the allocation size for
-   * the buffer. Defaults to 1.
-   * @param bytes_per_line An optional parameter specifying the number of bytes
-   * per line. Defaults to 1.
-   * @requires The types A and B must meet the requirements of the
-   * `ValidIntegerTypes_C` concept.
-   *
-   * @throws std::invalid_argument If the buffer has an existing registry, if
-   * allocation exceeds the maximum value of type A, or if bytes per line exceed
-   * the maximum value of type B.
-   */
-  template <typename A = u8, typename B = u8>
-  explicit buffer(A allocation = 1, B bytes_per_line = 1)
-    requires ValidIntegerTypes<A> && ValidIntegerTypes<B>;
-  /**
-   * Allocates memory for the buffer based on the specified allocation size and
-   * bytes per line. Performs validation to ensure the parameters meet
-   * constraints and preconditions. Throws exceptions if the buffer is already
-   * allocated or if the parameters are invalid.
-   *
-   * @param allocation The number of allocation units to reserve for the buffer.
-   * Must be of an unsigned type.
-   * @param bytes_per_line The number of bytes attributed to each line of the
-   * buffer. Must be of an unsigned type.
-   *
-   * @throws std::invalid_argument If the buffer has a registry, or if the
-   * allocation size or bytes per line exceed their respective maximum values.
-   * @throws std::logic_error If the buffer is already allocated.
-   */
-  template <typename A = u8, typename B = u8>
-  void allocate(A allocation = 1, B bytes_per_line = 1)
-    requires ValidIntegerTypes<A> && ValidIntegerTypes<B>;
-  /**
-   * Allocates memory for a buffer and manages its metadata registry. This
-   * method initializes the buffer and inserts the related metadata into the
-   * registry. It validates inputs and ensures correct states before allocation.
-   *
-   * @param ident The identifier associated with the allocated buffer for use in
-   * metadata registry.
-   * @param allocation The number of elements to allocate in the buffer. Must be
-   * an unsigned type.
-   * @param bytes_per_line The number of bytes per line in the buffer. Must be
-   * an unsigned type.
-   *
-   * @throws std::invalid_argument Thrown if the registry is not properly
-   * initialized, or if the allocation size or bytes per line exceed the allowed
-   * maximum values.
-   * @throws std::logic_error Thrown if the buffer is already allocated,
-   * preventing duplicate allocations.
-   */
-  template <typename A = u8, typename B = u8>
-  void allocate_into(std::string ident, A allocation = 1, B bytes_per_line = 1)
-    requires ValidIntegerTypes<A> && ValidIntegerTypes<B>;
+  explicit buffer(bool has_registry);
+  buffer(std::size_t allocation, std::size_t bytes_per_line);
+  void allocate(std::size_t allocation, std::size_t bytes_per_line);
+  void allocate_into(std::string ident, std::size_t allocation, std::size_t bytes_per_line);
   void registry();
   void registry(std::string &ident);
   void read_into(std::string ident, const std::filesystem::path &file_path);
   void read_into(std::string ident, const std::filesystem::path &file_path, const int &fd,
                  const off_t &file_size);
-  void write(const std::filesystem::path &file_path);
-  void write(const int &fd);
 
   // ONGOING: experimentation. overload '<<' and '>>' operators, for insertion & deletion.
   // Overload << for insertion
@@ -196,7 +134,7 @@ private:
    * @return A string representation of the memory address of nuts_buffer_ in
    * hexadecimal format.
    */
-  std::string addr_hex_();
+  uintptr_t addr_hex_();
 
   /**
    * Retrieves the current allocation status of the buffer.
@@ -230,23 +168,6 @@ private:
   // MARK: (buffer) stream controls
 
   // MARK: (buffer) metadata methods and fields
-  /**
-   * Inserts metadata into the buffer. This metadata includes memory address,
-   * an optional filename, and an optional registry identifier.
-   * Updates the internal metadata structure with the provided values.
-   *
-   * @param mem_addr The memory address of type nuts_buffer_mem_addr_t.
-   * @param filename An optional file name of type nuts_buffer_from_file_t,
-   *        representing the source file information. Pass std::nullopt if not
-   * applicable.
-   * @param ident An optional registry identifier of type
-   * nuts_buffer_registry_identifier_t, used for tracking or identifying
-   * associated metadata. Pass std::nullopt if not applicable.
-   */
-  void insert_metadata_(const nuts_buffer_mem_addr_t &mem_addr,
-                        const nuts_buffer_from_file_t &filename,
-                        const nuts_buffer_registry_identifier_t &ident);
-  void reset_metadata_();
   nuts_buffer_metadata_t metadata_{};
 
   // type of buffer
