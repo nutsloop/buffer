@@ -89,7 +89,6 @@ int main() {
       << '\n'
       << "stream doesn't return the null_byte"_.magenta().underline() << '\n';
 
-
   auto stream = buf_stream.stream();
   while (auto nuts_buffer_stream = stream.next(true)) {
 
@@ -106,7 +105,7 @@ int main() {
                                   (byte == buf_stream.byte("\n")
                                        ? "\\n"_.green().to_string()
                                        // FIXME: it does not handle multibyte characters.
-                                       : ansi(buf_stream.to_string(y,x)).green().to_string()))
+                                       : ansi(buf_stream.to_string(y, x)).green().to_string()))
                                  .bold()
                           << '\n';
 
@@ -126,7 +125,6 @@ int main() {
       << "stream doesn't return the null_byte"_.magenta().underline() << '\n'
       << "tokenizing the stream of the JSX file."_.bold().bright_background_blue() << '\n';
 
-
   while (auto nuts_buffer_stream = tokenizer.next(true)) {
     auto [location, byte] = *nuts_buffer_stream;
     auto [y, x] = location;
@@ -136,7 +134,6 @@ int main() {
       continue;
     }
 
-
     // skip whitespace and nullbytes if any
     if (byte == buf_stream.byte(' ') || byte == buf_stream.byte('\t') ||
         byte == buf_stream.byte('\r') || byte == buf_stream.byte('\0') ||
@@ -145,8 +142,8 @@ int main() {
     }
 
     // let's print everything that is alphanumeric
-    if (std::isalnum(static_cast<unsigned char>(*byte.data()))) {
-      stream_log->ostream() << ansi(buf_stream.to_string(y,x)).green().to_string();
+    if (std::isalnum(static_cast<int>(byte.at(0)))) {
+      stream_log->ostream() << buf_stream.byte(byte);
     }
 
     // let's play with the dot operator
@@ -348,10 +345,37 @@ int main() {
     }
   }
 
+  stream_log->ostream() << '\n'
+  << "using editing operators overloads on the buffer"_.bold()
+  << '\n';
+
   /*
    *FIXME: to use the stream in threads is necessary to create a registry of the streams
    *       or as per this example the streams will overlap
    */
+
+  // when the stream is created, it has already selected the first byte of the line 0, column 0
+  auto operation_stream = buf_stream.stream();
+  // so here we are replacing the byte at line 0, column 0 with the byte 'A'
+  operation_stream + buf_stream.byte('A');
+  // and here we are moving to byte at line 0, column 6
+  operation_stream.move_at_column(6);
+  // and remove it from the buffer
+  operation_stream - std::nullopt;
+
+  // now we are going to replace the byte at line 0, column 3 with the byte 'B'
+  operation_stream.move_at_column(3);
+  operation_stream = buf_stream.byte('B');
+
+  // now we are going to reset the stream to the first byte of the line 0, column 0
+  operation_stream.move_at_column(0);
+  operation_stream.move_at_line(0);
+  while (auto byte_opt = operation_stream.next()) {
+    auto [loc_, byte] = *byte_opt;
+    stream_log->ostream() << ansi("{}", buf_stream.byte(byte)).cyan();
+  }
+
+  stream_log->ostream() << '\n' << buf_stream.to_string();
 
   stream_log->flush();
   stream_log->close();
