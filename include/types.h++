@@ -47,7 +47,7 @@ struct nuts_buffer_metadata_t {
 
 // MARK: (buffer) buffer stream
 using nuts_buffer_stream_t = std::optional<std::tuple<std::array<std::size_t, 2>, nuts_byte_t>>;
-
+using nuts_buffer_stream_diff_t = std::vector<std::byte>::difference_type;
 // MARK: (buffer) size types
 struct nuts_buffer_col_t {
   std::size_t col_offset;
