@@ -2,7 +2,7 @@
 
 namespace nutsloop {
 
-bool buffer::get_read_(){
+bool buffer::get_read_() const{
 
 #if DEBUG_BUFFER == true
     { // MARK: (buffer) MUTEX_LOCK
