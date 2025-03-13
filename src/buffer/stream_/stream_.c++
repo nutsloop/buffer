@@ -25,11 +25,12 @@ nuts_buffer_stream_t buffer::stream_::next(const bool strip_null_byte) {
   {
     // MARK: (buffer) SHARED_LOCK
     std::shared_lock lock(mtx_);
+
     // If we've reached the end of the buffer, return nullopt to end the stream.
     if (line_.load() >= buffer_->size()) {
 
-      line_.store(0);          // Reset line index
-      column_.store(0);        // Reset column index
+      line_.store(0);     // Reset line index
+      column_.store(0);   // Reset column index
       byte_ = null_byte_; // Reset byte
 
       return std::nullopt; // End of stream
@@ -40,21 +41,21 @@ nuts_buffer_stream_t buffer::stream_::next(const bool strip_null_byte) {
 
       if (buffer_->get_from_string_()) {
 
-        line_.store(0);          // Reset line index
-        column_.store(0);        // Reset column index
-        byte_ =null_byte_; // Reset byte
+        line_.store(0);     // Reset line index
+        column_.store(0);   // Reset column index
+        byte_ = null_byte_; // Reset byte
 
         return std::nullopt;
       }
 
       return nuts_buffer_stream_t({
           {line_.fetch_add(1), column_.exchange(0)},
-        newline_byte_ // Return newline
+          newline_byte_ // Return newline
       });
     }
 
-    return nuts_buffer_stream_t({{line_.load(), column_.load()},
-                                 buffer_->get(line_.load(), column_.fetch_add(1))});
+    return nuts_buffer_stream_t(
+        {{line_.load(), column_.load()}, buffer_->get(line_.load(), column_.fetch_add(1))});
   }
 }
 
@@ -64,20 +65,20 @@ nuts_buffer_stream_t buffer::stream_::next(const bool strip_null_byte) {
 // it increments the column index until it finds the given byte.
 // it returns all the bytes until it finds the given byte.
 std::optional<nuts_byte_t> buffer::stream_::next(const std::size_t search_at_line,
-                                          const std::size_t from_col_n,
-                                          const nuts_byte_t& until_it_finds) {
+                                                 const std::size_t from_col_n,
+                                                 const nuts_byte_t &until_it_finds) {
 
   {
     // MARK: (buffer) MUTEX_LOCK
     std::shared_lock lock(mtx_);
 
     // select the line to search
-    line_.store(search_at_line);    // set the line index
-    column_.store(from_col_n);      // set the column index
-    byte_ = null_byte_; // Reset byte
+    line_.store(search_at_line); // set the line index
+    column_.store(from_col_n);   // set the column index
+    byte_ = null_byte_;          // Reset byte
 
     if (buffer_->get(search_at_line, from_col_n) != until_it_finds) {
-      column_.fetch_add(1);                         // Move to the next byte
+      column_.fetch_add(1);                               // Move to the next byte
       byte_ = {buffer_->get(search_at_line, from_col_n)}; // Return next byte
       return byte_;
     }
@@ -103,15 +104,15 @@ nuts_buffer_stream_t buffer::stream_::next(const size_t line, const bool strip_n
 
     // End of line
     if (column_.load() == buffer_->size(line_.load()) - (strip_null_byte ? 1 : 0)) {
-      column_.store(0);        // Reset column index
-      line_.store(0);          // Reset line index
-      byte_ = null_byte_; // Reset byte
-      return std::nullopt;            // Signal end of the line
+      column_.store(0);    // Reset column index
+      line_.store(0);      // Reset line index
+      byte_ = null_byte_;  // Reset byte
+      return std::nullopt; // Signal end of the line
     }
 
     // Return the next byte in the line
-    return nuts_buffer_stream_t({{line_.load(), column_.load()},
-                                 buffer_->get(line_.load(), column_.fetch_add(1))});
+    return nuts_buffer_stream_t(
+        {{line_.load(), column_.load()}, buffer_->get(line_.load(), column_.fetch_add(1))});
   }
 }
 
@@ -134,7 +135,8 @@ std::size_t buffer::stream_::move_at_column(const std::size_t col_n) {
   { // MARK: (buffer) SHARED_LOCK
     std::shared_lock lock(mtx_);
     if (col_n > buffer_->size(line_.load())) {
-      throw std::runtime_error("buffer::stream_::move_at_column(): column index exceeds buffer size");
+      throw std::runtime_error(
+          "buffer::stream_::move_at_column(): column index exceeds buffer size");
     }
 
     return column_.exchange(col_n);
@@ -149,5 +151,42 @@ std::size_t buffer::stream_::ends() {
     return line_.exchange(buffer_->size());
   }
 }
-
+void buffer::stream_::operator-(
+    [[maybe_unused]] std::optional<std::tuple<std::size_t>> coordinates) {
+  // TODO: implement the coordinates tuple to remove the byte at the given location
+  {
+    // MARK: (buffer) SHARED_LOCK
+    std::shared_lock lock(mtx_);
+    nuts_buffer_unlined_t &buf = buffer_->get(line_.load());
+    buf.erase(buf.begin() + diff_(column_));
+  }
 }
+
+void buffer::stream_::operator+(const nuts_byte_t &byte) {
+
+  {
+    // MARK: (buffer) SHARED_LOCK
+    std::shared_lock lock(mtx_);
+    byte_ = byte;
+    nuts_buffer_unlined_t &buf = buffer_->get(line_.load());
+    buf.insert(buf.begin() + diff_(column_), byte_);
+  }
+}
+
+buffer::stream_ &buffer::stream_::operator=(const nuts_byte_t &byte) {
+
+  {
+    // MARK: (buffer) SHARED_LOCK
+    std::shared_lock lock(mtx_);
+    byte_ = byte;
+    nuts_buffer_unlined_t &buf = buffer_->get(line_.load());
+    buf[column_.load()] = byte_;
+  }
+  return *this;
+}
+
+nuts_buffer_stream_diff_t buffer::stream_::diff_(const std::atomic<std::size_t> &index) {
+  return static_cast<nuts_buffer_stream_diff_t>(index.load());
+}
+
+} // namespace nutsloop
