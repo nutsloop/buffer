@@ -15,6 +15,10 @@ buffer::stream_ buffer::stream() {
 
 #endif
 
+  if (!this->get_allocated_()) {
+    throw std::runtime_error("buffer::stream() called on buffer that is not allocated");
+  }
+
   return stream_(this);
 }
 
