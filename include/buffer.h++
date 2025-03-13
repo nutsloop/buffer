@@ -21,11 +21,19 @@ class buffer {
     std::optional<nuts_byte_t> next(std::size_t search_at_line, std::size_t from_col_n,
                                     const nuts_byte_t &until_it_finds);
     nuts_buffer_stream_t next(size_t line, bool strip_null_byte = false);
+
+    // moving into the buffer.
     std::size_t move_at_line(std::size_t line_n);
     std::size_t move_at_column(std::size_t col_n);
     std::size_t ends();
 
+    // editing the buffer.
+    void operator-(std::optional<std::tuple<std::size_t>> coordinates);
+    void operator+(const nuts_byte_t &byte);
+    stream_ &operator=(const nuts_byte_t &byte);
+
   private:
+    static nuts_buffer_stream_diff_t diff_(const std::atomic<std::size_t> &index);
     friend class buffer;
     std::shared_mutex mtx_;
     std::atomic<std::size_t> line_{0};
@@ -46,7 +54,10 @@ public:
   // create a buffer form file.
   explicit buffer(const std::filesystem::path &file_path);
 
-  // MARK: (buffer) buffer from file and string
+  // MARK: (buffer) buffer allocation.
+  void allocate();
+
+  // MARK: (buffer) buffer from file and string.
   void read(const std::filesystem::path &file_path);
   void string(const std::string &str);
 
@@ -105,7 +116,7 @@ private:
   void from_file_(const std::filesystem::path &file_path);
 
   // MARK: (buffer) mutex methods and fields
-  std::shared_mutex mtx_;
+  mutable std::shared_mutex mtx_;
 
   nuts_buffer_t nuts_buffer_;
   nuts_buffer_unlined_t nuts_buffer_unlined_;
@@ -126,42 +137,10 @@ private:
   // malformed
   nuts_byte_t malformed_byte_{std::byte{0xEF}, std::byte{0xBF}, std::byte{0xBD}};
 
-  /**
-   * Generates the hexadecimal address of the internal nuts_buffer_ memory
-   * location. It uses the address of the internal buffer data and returns it in
-   * a formatted string.
-   *
-   * @return A string representation of the memory address of nuts_buffer_ in
-   * hexadecimal format.
-   */
   uintptr_t addr_hex_();
 
-  /**
-   * Retrieves the current allocation status of the buffer.
-   * The method checks and returns whether the buffer is currently allocated.
-   * It uses a shared lock to ensure thread-safe access to the allocation
-   * status.
-   *
-   * @return A boolean value indicating whether the buffer is allocated.
-   */
   bool get_allocated_();
-  /**
-   * Marks the buffer as allocated by updating its internal state.
-   * Ensures thread-safe operation using a mutex and provides debug output
-   * if debugging is enabled.
-   *
-   * This method transitions the `allocated_` flag to `true` while preserving
-   * the previous state for potential debug logging purposes.
-   */
   void set_allocated_();
-  /**
-   * Marks the buffer as not allocated by updating the allocated_ flag to false.
-   * If debugging is enabled, logs the previous and updated states of the
-   * allocated_ flag.
-   *
-   * This method also ensures thread safety by using a shared lock for accessing
-   * and logging the state of the allocated_ flag.
-   */
   void unset_allocated_();
   std::atomic<bool> allocated_{false};
 
@@ -171,52 +150,23 @@ private:
   nuts_buffer_metadata_t metadata_{};
 
   // type of buffer
+  bool get_manual_() const;
+  void set_manual_();
+  void unset_manual_();
+  std::atomic<bool> manual_{false};
+
   bool get_from_string_() const;
   void set_from_string_();
   void unset_from_string_();
   std::atomic<bool> string_{false};
 
-  /**
-   * Retrieves the current state of the read flag.
-   *
-   * This method acquires a shared lock for thread-safe access to the
-   * internal read flag and provides its current value. If debugging is
-   * enabled, it also logs the operation and the state of the read flag.
-   *
-   * @return The current state of the read flag (true if active, false
-   * otherwise).
-   */
-  bool get_read_();
-  /**
-   * Marks the buffer as read by updating the internal state.
-   * This method updates the read status of the buffer to indicate
-   * that it has been accessed for reading. Thread-safe operation
-   * using atomic exchange to ensure consistency in multithreaded
-   * environments. When in debug mode, log the state change.
-   */
+  bool get_read_() const;
   void set_read_();
   void unset_read_();
   std::atomic<bool> read_{false};
 
   // MARK: (buffer) registry methods and fields
-  /**
-   * Checks if the buffer has been initialized with a registry.
-   *
-   * This method provides a thread-safe mechanism to retrieve the state of
-   * the internal registry flag using atomic operations. It also logs
-   * its activity when debugging is enabled.
-   *
-   * @return The current state of the `has_registry_` flag, where `true`
-   *         indicates the presence of a registry and `false` indicates
-   * otherwise.
-   */
   bool get_has_registry_();
-  /**
-   * Sets the `has_registry_` flag to `true` in a thread-safe manner.
-   * This method updates the internal state of the flag using an atomic
-   * operation to ensure consistency in a multithreaded environment. It can
-   * optionally log the state transitions if debugging is enabled.
-   */
   void set_has_registry_();
   void unset_has_registry_();
   std::atomic<bool> has_registry_{false};
