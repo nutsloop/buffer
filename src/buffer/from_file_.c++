@@ -1,5 +1,7 @@
 #include "buffer.h++"
 
+#include <fstream>
+
 namespace nutsloop {
 
 void buffer::from_file_(const std::filesystem::path &file_path) {
