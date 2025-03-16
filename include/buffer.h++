@@ -33,7 +33,7 @@ class buffer {
     stream_ &operator=(const nuts_byte_t &byte);
 
   private:
-    static nuts_buffer_stream_diff_t diff_(const std::atomic<std::size_t> &index);
+    static nuts_diff_t diff_(const std::atomic<std::size_t> &index);
     friend class buffer;
     std::shared_mutex mtx_;
     std::atomic<std::size_t> line_{0};
@@ -106,6 +106,13 @@ public:
   // Overload >> for deletion
   buffer &operator>>(const std::tuple<size_t, std::optional<size_t>> &deletion);
 
+  void operator-(const nuts_operators_line_t &line);
+  void operator-(const nuts_operators_col_t &col);
+  void operator+(const nuts_operators_line_t &line);
+  void operator+(const nuts_operators_col_t &col);
+  void operator+(const nuts_operators_byte_t &byte);
+  buffer &operator=(const nuts_operators_byte_t &byte);
+
 private:
   // MARK: (buffer) buffer process raw bytes
   void process_bytes_(const std::string &str);
@@ -138,8 +145,9 @@ private:
   nuts_byte_t malformed_byte_{std::byte{0xEF}, std::byte{0xBF}, std::byte{0xBD}};
 
   uintptr_t addr_hex_();
+  static nuts_diff_t diff_(const std::size_t &index);
 
-  bool get_allocated_();
+  bool get_allocated_() const;
   void set_allocated_();
   void unset_allocated_();
   std::atomic<bool> allocated_{false};
@@ -166,7 +174,7 @@ private:
   std::atomic<bool> read_{false};
 
   // MARK: (buffer) registry methods and fields
-  bool get_has_registry_();
+  bool get_has_registry_() const;
   void set_has_registry_();
   void unset_has_registry_();
   std::atomic<bool> has_registry_{false};
