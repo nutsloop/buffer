@@ -22,6 +22,9 @@ nuts_byte_t buffer::byte(char c) {
 
 nuts_byte_t buffer::byte(const std::string &str) {
 
+  if (str.size() > 1) {
+    throw std::invalid_argument("buffer::byte(const std::string &str): string size must be 1");
+  }
   { // MARK: (buffer) UNIQUE_LOCK
     std::unique_lock lock(mtx_);
     nuts_byte_.clear();
