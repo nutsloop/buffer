@@ -346,8 +346,8 @@ int main() {
   }
 
   stream_log->ostream() << '\n'
-  << "using editing operators overloads on the buffer"_.bold()
-  << '\n';
+                        << "using editing stream_ class operators overloads on the buffer"_.bold()
+                        << '\n';
 
   /*
    *FIXME: to use the stream in threads is necessary to create a registry of the streams
@@ -356,7 +356,7 @@ int main() {
 
   // when the stream is created, it has already selected the first byte of the line 0, column 0
   auto operation_stream = buf_stream.stream();
-  // so here we are replacing the byte at line 0, column 0 with the byte 'A'
+  // so here we are adding the byte at line 0, column 0 with the byte 'A'
   operation_stream + buf_stream.byte('A');
   // and here we are moving to byte at line 0, column 6
   operation_stream.move_at_column(6);
@@ -374,6 +374,26 @@ int main() {
     auto [loc_, byte] = *byte_opt;
     stream_log->ostream() << ansi("{}", buf_stream.byte(byte)).cyan();
   }
+
+  stream_log->ostream() << '\n'
+                        << "using editing buffer class itself operators overloads"_.bold() << '\n';
+
+  buf_stream - nuts_operators_line_t{6};
+  buf_stream - nuts_operators_col_t{6, 2};
+  buf_stream + nuts_operators_byte_t{6, 2, buf_stream.byte('C')};
+  buf_stream + nuts_operators_line_t{7};
+  if (buf_stream.get(7, 0) == buf_stream.byte('\0')) {
+    stream_log->ostream() << "null byte found for new line added"_.red();
+  }
+  buf_stream + nuts_operators_col_t{8, 0};
+  if (buf_stream.get(8, 0) == buf_stream.byte('\0')) {
+    stream_log->ostream() << "\nnull byte found for new column added"_.red();
+  }
+  buf_stream + nuts_operators_byte_t{8, 0, buf_stream.byte('D')};
+  buf_stream + nuts_operators_byte_t{7, 0, buf_stream.byte(' ')};
+  buf_stream + nuts_operators_byte_t{7, 1, buf_stream.byte(' ')};
+  buf_stream + nuts_operators_byte_t{7, 2, buf_stream.byte("4")};
+  buf_stream = nuts_operators_byte_t{6, 2, buf_stream.byte("4")};
 
   stream_log->ostream() << '\n' << buf_stream.to_string();
 
