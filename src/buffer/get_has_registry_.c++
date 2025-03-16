@@ -2,7 +2,7 @@
 
 namespace nutsloop {
 
-bool buffer::get_has_registry_() {
+bool buffer::get_has_registry_() const {
 
 #if DEBUG_BUFFER == true
     { // MARK: (buffer) MUTEX_LOCK
