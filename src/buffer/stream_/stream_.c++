@@ -185,8 +185,8 @@ buffer::stream_ &buffer::stream_::operator=(const nuts_byte_t &byte) {
   return *this;
 }
 
-nuts_buffer_stream_diff_t buffer::stream_::diff_(const std::atomic<std::size_t> &index) {
-  return static_cast<nuts_buffer_stream_diff_t>(index.load());
+nuts_diff_t buffer::stream_::diff_(const std::atomic<std::size_t> &index) {
+  return static_cast<nuts_diff_t>(index.load());
 }
 
 } // namespace nutsloop
