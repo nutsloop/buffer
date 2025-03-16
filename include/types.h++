@@ -47,7 +47,7 @@ struct nuts_buffer_metadata_t {
 
 // MARK: (buffer) buffer stream
 using nuts_buffer_stream_t = std::optional<std::tuple<std::array<std::size_t, 2>, nuts_byte_t>>;
-using nuts_buffer_stream_diff_t = std::vector<std::byte>::difference_type;
+
 // MARK: (buffer) size types
 struct nuts_buffer_col_t {
   std::size_t col_offset;
@@ -80,4 +80,18 @@ template <std::size_t S> using nuts_buffer_ro_unlined_t = std::array<std::byte, 
 template <std::size_t S, std::size_t I>
 using nuts_buffer_ro_t = std::array<nuts_buffer_ro_unlined_t<I>, S>;
 
+// ONGOING: operators overloads.
+using nuts_diff_t = std::vector<std::byte>::difference_type;
+struct nuts_operators_line_t {
+  std::size_t y;
+};
+struct nuts_operators_col_t {
+  std::size_t y;
+  std::size_t x;
+};
+struct nuts_operators_byte_t {
+  std::size_t y;
+  std::size_t x;
+  nuts_byte_t byte;
+};
 } // namespace nutsloop::nbuffer::types
